@@ -90,6 +90,10 @@ def build_plays(raw):
     plays.loc[fg, "fg_made"] = (plays.loc[fg, "field_goal_result"] == "made").astype(int)
     plays.loc[~fg, "kick_distance"] = pd.NA
 
+    plays["xp_made"] = pd.NA
+    xp = plays.play_type == "extra_point"
+    plays.loc[xp, "xp_made"] = (plays.loc[xp, "extra_point_result"] == "good").astype(int)
+
     ko = plays.play_type == "kickoff"
     plays["kickoff_returned"] = pd.NA
     plays.loc[ko, "kickoff_returned"] = plays.loc[ko, "kickoff_returner_player_id"].notna().astype(int)
@@ -102,12 +106,12 @@ def build_plays(raw):
         "home_away", "coach", "roof", "qtr", "down", "ydstogo", "yardline_100",
         "score_differential", "play_type", "fourth_down_decision", "yards_gained",
         "epa", "success", "touchdown", "turnover", "sack", "two_point_success",
-        "kick_distance", "fg_made", "kickoff_returned", "touchback",
+        "kick_distance", "fg_made", "xp_made", "kickoff_returned", "touchback",
     ]
     plays = plays[columns]
     int_cols = ["qtr", "down", "ydstogo", "yardline_100", "score_differential",
                 "yards_gained", "success", "touchdown", "sack", "two_point_success",
-                "kick_distance", "fg_made", "kickoff_returned", "touchback"]
+                "kick_distance", "fg_made", "xp_made", "kickoff_returned", "touchback"]
     plays[int_cols] = plays[int_cols].astype("Int64")
     return plays.rename(columns={"posteam": "offense", "defteam": "defense"})
 
