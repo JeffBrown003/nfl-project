@@ -16,13 +16,23 @@ function lineSet(label, data, color) {
   return { label, data, borderColor: color, backgroundColor: color, pointBorderColor: "#fcfcfb", pointBorderWidth: 2 };
 }
 
+// Build a chart the first time its card scrolls into view, so it animates in.
+function lazyChart(id, config) {
+  const canvas = document.getElementById(id);
+  onVisible(canvas.closest(".chart-card"), () => {
+    config.options = config.options || {};
+    config.options.animation = { duration: 1200, easing: "easeOutQuart" };
+    new Chart(canvas, config);
+  }, "0px 0px -15% 0px");
+}
+
 fetch("data/findings.json")
   .then((r) => r.json())
   .then((d) => {
     const seasons = d.seasons;
 
     // 1. Go rate
-    new Chart(document.getElementById("chart-go"), {
+    lazyChart("chart-go", {
       type: "line",
       data: {
         labels: seasons,
@@ -37,7 +47,7 @@ fetch("data/findings.json")
     // 2. Conversion by distance
     const dist = d.conversion.by_distance;
     const distKeys = Object.keys(dist);
-    new Chart(document.getElementById("chart-conv"), {
+    lazyChart("chart-conv", {
       type: "bar",
       data: {
         labels: distKeys.map((k) => (k === "1" ? "1 yard" : k + " yards")),
@@ -54,7 +64,7 @@ fetch("data/findings.json")
 
     // 3. Top team-seasons (Detroit highlighted)
     const top = d.aggressive.top_team_seasons;
-    new Chart(document.getElementById("chart-top"), {
+    lazyChart("chart-top", {
       type: "bar",
       data: {
         labels: top.map((t) => `${t.season} ${t.team}`),
@@ -84,7 +94,7 @@ fetch("data/findings.json")
     });
 
     // 4. Aggressiveness vs winning
-    new Chart(document.getElementById("chart-win"), {
+    lazyChart("chart-win", {
       type: "bar",
       data: {
         labels: d.win.labels,
@@ -101,7 +111,7 @@ fetch("data/findings.json")
     });
 
     // 5. Pass vs run success
-    new Chart(document.getElementById("chart-passrun"), {
+    lazyChart("chart-passrun", {
       type: "line",
       data: {
         labels: seasons,
@@ -114,7 +124,7 @@ fetch("data/findings.json")
     });
 
     // 6. Two-point vs extra point
-    new Chart(document.getElementById("chart-two"), {
+    lazyChart("chart-two", {
       type: "line",
       data: {
         labels: seasons,
@@ -141,7 +151,7 @@ fetch("data/findings.json")
     });
 
     // 7. Field goals by distance
-    new Chart(document.getElementById("chart-fg"), {
+    lazyChart("chart-fg", {
       type: "line",
       data: {
         labels: seasons,
@@ -167,7 +177,7 @@ fetch("data/findings.json")
     });
 
     // 8. Kickoffs
-    new Chart(document.getElementById("chart-ko"), {
+    lazyChart("chart-ko", {
       type: "line",
       data: {
         labels: seasons,
@@ -181,7 +191,7 @@ fetch("data/findings.json")
 
     // 9. Home win %
     const homeVals = seasonSeries(d.home.win_pct, seasons);
-    new Chart(document.getElementById("chart-home"), {
+    lazyChart("chart-home", {
       type: "bar",
       data: {
         labels: seasons,

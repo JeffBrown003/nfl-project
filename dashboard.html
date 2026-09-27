@@ -18,16 +18,23 @@
     <div class="nav-links">
       <a href="index.html">Report</a>
       <a href="dashboard.html" class="active">Dashboard</a>
+      <a href="matchups.html">Matchups</a>
       <a href="index.html#data">About the data</a>
+      <button id="music-toggle" class="music-btn" type="button" aria-pressed="false" title="Play an original stadium beat"><span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="music-label">Music off</span></button>
     </div>
   </div>
+  <div class="progress" aria-hidden="true"></div>
 </nav>
 
-<main class="wrap">
-  <header class="dash-head">
+<header class="matchup-hero">
+  <div class="wrap intro">
+    <p class="kicker">Dashboard &middot; 419,148 plays</p>
     <h1>The Play Explorer</h1>
     <p>Every NFL play from 2016 to 2025. Pick filters, then switch the measure and the breakdown; every number, chart and the table update together.</p>
-  </header>
+  </div>
+</header>
+
+<main class="wrap">
 
   <section class="panel" aria-label="Filters">
     <div class="filters">
@@ -155,6 +162,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="js/common.js"></script>
+<script src="js/effects.js"></script>
+<script src="js/music.js"></script>
 <script src="js/dashboard.js"></script>
 </body>
 </html>

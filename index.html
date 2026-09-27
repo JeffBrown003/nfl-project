@@ -18,15 +18,23 @@
     <div class="nav-links">
       <a href="index.html" class="active">Report</a>
       <a href="dashboard.html">Dashboard</a>
+      <a href="matchups.html">Matchups</a>
       <a href="#data">About the data</a>
+      <button id="music-toggle" class="music-btn" type="button" aria-pressed="false" title="Play an original stadium beat"><span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="music-label">Music off</span></button>
     </div>
   </div>
+  <div class="progress" aria-hidden="true"></div>
 </nav>
 
-<header class="hero">
-  <div class="wrap">
-    <p class="kicker">NFL play-by-play &middot; 2016&ndash;2025</p>
-    <h1>Playing the Odds</h1>
+<header class="hero stadium">
+  <div class="lights" aria-hidden="true"><span></span><span></span></div>
+  <svg class="goalpost" viewBox="0 0 300 360" aria-hidden="true"><g fill="none" stroke="#ffd23f" stroke-width="12" stroke-linecap="round"><path d="M150 360V200M40 200h220M40 200V10M260 200V10"/></g></svg>
+  <div class="flight" aria-hidden="true">
+    <svg class="ball" viewBox="0 0 64 40"><ellipse cx="32" cy="20" rx="30" ry="18" fill="#8b4513" stroke="#5a2d0c" stroke-width="2"/><path d="M20 20h24M24 16v8M29 16v8M34 16v8M39 16v8" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M8 12c4-3 4 19 0 16M56 12c-4-3-4 19 0 16" stroke="#fff" stroke-width="2" fill="none"/></svg>
+  </div>
+  <div class="wrap intro">
+    <p class="kicker">NFL play-by-play &middot; 2016&ndash;2025 &middot; 419,148 plays</p>
+    <h1 class="big">Playing<br>the <em>Odds</em></h1>
     <p class="byline">How NFL coaches learned to take risks &middot; by Jeff Brown</p>
     <p class="summary">
       Every play in football is a bet: punt or go for it, kick the extra point or try for two, run or pass.
@@ -36,18 +44,23 @@
       than half the time. But not every edge is growing: passing's advantage over running has almost disappeared,
       a two-point try pays exactly what an extra point does, and home-field advantage has faded.
     </p>
+    <div class="hero-cta"><a class="cta" href="#f1">Start the report &darr;</a><a class="btn-ghost" href="dashboard.html">Open the dashboard</a><a class="btn-ghost" href="matchups.html">Team vs. team</a></div>
   </div>
+  <div class="ticker" aria-hidden="true"><div class="ticker-track">
+    <span>4TH-DOWN GO RATE <b>23.3%</b> <span class="up">&#9650; +10.5 pts since 2016</span></span><span>4TH &amp; 1 CONVERSION <b>67.1%</b></span><span>DET 2023 GO RATE <b>33.9%</b> <span class="up">&#9650; #1 of 320</span></span><span>PASS&ndash;RUN SUCCESS GAP <b>1.7 pts</b> <span class="down">&#9660; from 5.8</span></span><span>2-PT TRY <b>0.94 pts</b> = XP <b>0.94 pts</b></span><span>50+ YD FG <b>68.8%</b> <span class="up">&#9650; from 56.7%</span></span><span>KICKOFFS RETURNED <b>74.4%</b> <span class="up">&#9650; from 25.2%</span></span><span>HOME WIN % <b>54.2%</b> <span class="down">&#9660; from 58.2%</span></span><span>4TH-DOWN GO RATE <b>23.3%</b> <span class="up">&#9650; +10.5 pts since 2016</span></span><span>4TH &amp; 1 CONVERSION <b>67.1%</b></span><span>DET 2023 GO RATE <b>33.9%</b> <span class="up">&#9650; #1 of 320</span></span><span>PASS&ndash;RUN SUCCESS GAP <b>1.7 pts</b> <span class="down">&#9660; from 5.8</span></span><span>2-PT TRY <b>0.94 pts</b> = XP <b>0.94 pts</b></span><span>50+ YD FG <b>68.8%</b> <span class="up">&#9650; from 56.7%</span></span><span>KICKOFFS RETURNED <b>74.4%</b> <span class="up">&#9650; from 25.2%</span></span><span>HOME WIN % <b>54.2%</b> <span class="down">&#9660; from 58.2%</span></span>
+  </div></div>
 </header>
 
-<main class="wrap">
+<main>
+<div class="wrap">
 
-  <section class="stats" aria-label="Headline numbers">
-    <div class="stat"><div class="value">419,148</div><div class="label">plays analyzed, 2016&ndash;2025 seasons</div></div>
-    <div class="stat"><div class="value">23.3%</div><div class="label">of 4th downs went for it in 2025 (12.8% in 2016)</div></div>
-    <div class="stat"><div class="value">63.9%</div><div class="label">go-for-it rate on 4th and 2 or less in 2025 (34.0% in 2016)</div></div>
-    <div class="stat"><div class="value">53.4%</div><div class="label">of 4th-down attempts were converted, 2016&ndash;2025</div></div>
-    <div class="stat"><div class="value">74.4%</div><div class="label">of kickoffs were returned in 2025 (25.2% in 2023)</div></div>
-    <div class="stat"><div class="value">54.2%</div><div class="label">home-team win rate, 2023&ndash;2025 (58.2% in 2016&ndash;2018)</div></div>
+  <section class="stats over" aria-label="Headline numbers">
+    <div class="stat"><div class="value" data-count>419,148</div><div class="label">plays analyzed, 2016&ndash;2025 seasons</div></div>
+    <div class="stat"><div class="value" data-count>23.3%</div><div class="label">of 4th downs went for it in 2025 (12.8% in 2016)</div></div>
+    <div class="stat"><div class="value" data-count>63.9%</div><div class="label">go-for-it rate on 4th and 2 or less in 2025 (34.0% in 2016)</div></div>
+    <div class="stat"><div class="value" data-count>53.4%</div><div class="label">of 4th-down attempts were converted, 2016&ndash;2025</div></div>
+    <div class="stat"><div class="value" data-count>74.4%</div><div class="label">of kickoffs were returned in 2025 (25.2% in 2023)</div></div>
+    <div class="stat"><div class="value" data-count>54.2%</div><div class="label">home-team win rate, 2023&ndash;2025 (58.2% in 2016&ndash;2018)</div></div>
   </section>
 
   <nav class="toc" aria-label="Findings">
@@ -65,32 +78,38 @@
     </ol>
   </nav>
 
-  <!-- 1 -->
-  <section class="finding" id="f1">
+</div>
+<section class="slide bg-turf dark" id="f1">
+  <div class="watermark" aria-hidden="true">01</div>
+  <div class="wrap">
+  <div class="finding">
     <div class="tag">Finding 1 &middot; Fourth downs</div>
     <h2>Coaches go for it on fourth down nearly twice as often as they did in 2016</h2>
     <div class="finding-body">
-      <div>
+      <div class="reveal">
         <p>In 2016, teams went for it on <strong>12.8%</strong> of fourth downs and punted or kicked a field goal on the rest.
           By 2025 that share had climbed to <strong>23.3%</strong>. That is <strong>882</strong> fourth-down attempts in a season, up from <strong>477</strong>.</p>
         <p>The change is even bigger when only a yard or two is needed. On 4th and 2 or less, the go-for-it rate rose from
           <strong>34.0%</strong> in 2016 to <strong>63.9%</strong> in 2025. Going for it used to be the exception on a short fourth down; now it is the norm.
           The climb was not perfectly smooth (the overall rate dipped to 18.8% in 2022), but each of the last six seasons is above every season before 2020.</p>
       </div>
-      <div class="chart-card">
+      <div class="chart-card reveal delay">
         <h3>Share of 4th downs where the offense went for it</h3>
         <p class="sub">Regular season, by year</p>
         <div class="chart-box"><canvas id="chart-go"></canvas></div>
       </div>
     </div>
-  </section>
-
-  <!-- 2 -->
-  <section class="finding" id="f2">
+  </div>
+  </div>
+</section>
+<section class="slide bg-chalk dark" id="f2">
+  <div class="watermark" aria-hidden="true">02</div>
+  <div class="wrap">
+  <div class="finding">
     <div class="tag">Finding 2 &middot; Does the gamble pay?</div>
     <h2>Short fourth downs are a good bet: 4th and 1 is converted two times out of three</h2>
     <div class="finding-body">
-      <div>
+      <div class="reveal">
         <p>Across all ten seasons, teams converted <strong>53.4%</strong> of their fourth-down attempts. Distance is everything.
           On 4th and 1 the success rate is <strong>67.1%</strong> (2,648 attempts); on 4th and 2 it is <strong>59.3%</strong>.
           It falls to <strong>50.1%</strong> at 3&ndash;5 yards, <strong>35.8%</strong> at 6&ndash;10 yards and <strong>20.8%</strong> at 11 or more.</p>
@@ -98,40 +117,46 @@
           a go-for-it attempt averaged <strong>+0.058</strong> points, while a punt averaged <strong>&minus;0.107</strong>.
           Coaches mostly go for it when the odds are good, so this does not prove every punt is a mistake, but the short-yardage numbers explain why the trend in Finding 1 happened.</p>
       </div>
-      <div class="chart-card">
+      <div class="chart-card reveal delay">
         <h3>4th-down conversion rate by yards needed</h3>
         <p class="sub">All go-for-it attempts, regular season 2016&ndash;2025</p>
         <div class="chart-box"><canvas id="chart-conv"></canvas></div>
       </div>
     </div>
-  </section>
-
-  <!-- 3 -->
-  <section class="finding" id="f3">
+  </div>
+  </div>
+</section>
+<section class="slide bg-stripes dark" id="f3">
+  <div class="watermark" aria-hidden="true">03</div>
+  <div class="wrap">
+  <div class="finding">
     <div class="tag">Finding 3 &middot; Who takes the most risk</div>
     <h2>Dan Campbell's Detroit Lions own four of the ten most aggressive seasons</h2>
     <div class="finding-body">
-      <div>
+      <div class="reveal">
         <p>Ranking every team-season by fourth-down go rate, the <strong>2023 Lions</strong> top the list at <strong>33.9%</strong>.
           Detroit under head coach Dan Campbell appears four times in the top ten (2021, 2022, 2023 and 2024), and Carolina appears twice.
           Every one of the ten most aggressive seasons came in 2021 or later.</p>
         <p>Over all ten years, Philadelphia went for it most often (<strong>22.5%</strong> of fourth downs), just ahead of Detroit (<strong>21.9%</strong>).
           The most cautious teams were Seattle (<strong>12.2%</strong>), Pittsburgh (<strong>13.9%</strong>) and San Francisco (<strong>14.8%</strong>).</p>
       </div>
-      <div class="chart-card">
+      <div class="chart-card reveal delay">
         <h3>Top 10 team-seasons by 4th-down go rate</h3>
         <p class="sub">Regular season; hover for coach and number of attempts</p>
         <div class="chart-box" style="height:340px"><canvas id="chart-top"></canvas></div>
       </div>
     </div>
-  </section>
-
-  <!-- 4 -->
-  <section class="finding" id="f4">
+  </div>
+  </div>
+</section>
+<section class="slide bg-market dark" id="f4">
+  <div class="watermark" aria-hidden="true">04</div>
+  <div class="wrap">
+  <div class="finding">
     <div class="tag">Finding 4 &middot; Risk and winning</div>
     <h2>Aggressive teams seem to lose more, until you remove the desperate situations</h2>
     <div class="finding-body">
-      <div>
+      <div class="reveal">
         <p>A naive look says aggression loses. Splitting the 320 team-seasons into four equal groups by overall go rate, the least aggressive quarter
           won <strong>55.0%</strong> of their games and the most aggressive won just <strong>44.4%</strong>. But that is backwards cause and effect:
           teams that are losing late in games <em>have</em> to go for it.</p>
@@ -139,20 +164,23 @@
           7 points. Now the pattern flips. Teams that went for it least in these spots (20.0% of the time) won <strong>47.1%</strong> of games;
           teams that went for it most (73.0%) won <strong>53.0%</strong>. This is a relationship, not proof, since good teams may simply trust their offense more.</p>
       </div>
-      <div class="chart-card">
+      <div class="chart-card reveal delay">
         <h3>Win % by how aggressive a team was</h3>
         <p class="sub">320 team-seasons split into four equal groups</p>
         <div class="chart-box"><canvas id="chart-win"></canvas></div>
       </div>
     </div>
-  </section>
-
-  <!-- 5 -->
-  <section class="finding" id="f5">
+  </div>
+  </div>
+</section>
+<section class="slide bg-routes" id="f5">
+  <div class="watermark" aria-hidden="true">05</div>
+  <div class="wrap">
+  <div class="finding">
     <div class="tag">Finding 5 &middot; Run or pass</div>
     <h2>Passing still pays more, but running has nearly caught up</h2>
     <div class="finding-body">
-      <div>
+      <div class="reveal">
         <p>The analytics message of the 2010s was simple: pass more. In 2016 a pass play succeeded (gained positive EPA) <strong>45.6%</strong> of the time,
           versus <strong>39.8%</strong> for a run. By 2025 the run success rate had risen to <strong>43.0%</strong> while passing slipped to <strong>44.7%</strong>,
           shrinking a 5.8-point gap to 1.7 points.</p>
@@ -160,93 +188,108 @@
           <strong>+0.018</strong> versus <strong>&minus;0.006</strong> in 2025. Teams have responded. The share of plays that were passes fell from
           <strong>59.9%</strong> in 2016 to <strong>56.8%</strong> in 2025.</p>
       </div>
-      <div class="chart-card">
+      <div class="chart-card reveal delay">
         <h3>Success rate: pass plays vs. run plays</h3>
         <p class="sub">Share of plays with positive expected points added, regular season</p>
         <div class="chart-box"><canvas id="chart-passrun"></canvas></div>
       </div>
     </div>
-  </section>
-
-  <!-- 6 -->
-  <section class="finding" id="f6">
+  </div>
+  </div>
+</section>
+<section class="slide bg-coin" id="f6">
+  <div class="watermark" aria-hidden="true">06</div>
+  <div class="wrap">
+  <div class="finding">
     <div class="tag">Finding 6 &middot; After the touchdown</div>
     <h2>A two-point try is a coin flip that pays exactly what an extra point does</h2>
     <div class="finding-body">
-      <div>
+      <div class="reveal">
         <p>From 2016 to 2025, teams converted <strong>47.2%</strong> of two-point tries. Worth two points each, that is an expected
           <strong>0.94</strong> points per try. Extra points were good <strong>94.3%</strong> of the time, also <strong>0.94</strong> expected points.</p>
         <p>With the payoff equal on average, the choice only matters in specific game situations, which is why attempts stayed rare
           (between 81 and 153 per season). Year to year the two-point payoff swings more, from <strong>1.07</strong> points in 2023 to
           <strong>0.81</strong> in 2024: the same average return, with more risk.</p>
       </div>
-      <div class="chart-card">
+      <div class="chart-card reveal delay">
         <h3>Expected points per try</h3>
         <p class="sub">Two-point success rate &times; 2 vs. extra-point success rate &times; 1</p>
         <div class="chart-box"><canvas id="chart-two"></canvas></div>
       </div>
     </div>
-  </section>
-
-  <!-- 7 -->
-  <section class="finding" id="f7">
+  </div>
+  </div>
+</section>
+<section class="slide bg-goal dark" id="f7">
+  <div class="watermark" aria-hidden="true">07</div>
+  <div class="wrap">
+  <div class="finding">
     <div class="tag">Finding 7 &middot; Kickers</div>
     <h2>Kickers made the 50-yard field goal routine, and coaches noticed</h2>
     <div class="finding-body">
-      <div>
+      <div class="reveal">
         <p>In 2016 kickers made <strong>56.7%</strong> of field goals from 50 yards or more. In 2025 they made <strong>68.8%</strong>.
           Coaches responded by trying far more of them: <strong>266</strong> attempts from 50+ in 2025 (and a peak of <strong>279</strong> in 2024),
           up from <strong>150</strong> in 2016.</p>
         <p>Kicks under 40 yards were already near-automatic and stayed that way (<strong>94.1%</strong> in 2016, <strong>95.1%</strong> in 2025).
           The long kick is where the improvement happened, and it gives coaches another option on fourth down in the 30&ndash;40 yard range.</p>
       </div>
-      <div class="chart-card">
+      <div class="chart-card reveal delay">
         <h3>Field goal success rate by distance</h3>
         <p class="sub">Regular season, by year</p>
         <div class="chart-box"><canvas id="chart-fg"></canvas></div>
       </div>
     </div>
-  </section>
-
-  <!-- 8 -->
-  <section class="finding" id="f8">
+  </div>
+  </div>
+</section>
+<section class="slide bg-lights dark" id="f8">
+  <div class="watermark" aria-hidden="true">08</div>
+  <div class="wrap">
+  <div class="finding">
     <div class="tag">Finding 8 &middot; Rule changes</div>
     <h2>The kickoff came back from the dead after two rule changes</h2>
     <div class="finding-body">
-      <div>
+      <div class="reveal">
         <p>For years about four in ten kickoffs were returned (<strong>39.4%</strong> in 2016, <strong>37.5%</strong> in 2022).
           In 2023 a fair catch inside the 25 began counting as a touchback, and the return rate fell to <strong>25.2%</strong>.</p>
         <p>The league then redesigned the play. The new kickoff format in 2024 lifted returns to <strong>32.8%</strong>, and after
           touchbacks were moved out to the 35-yard line in 2025, kicking into the end zone became a bad deal: <strong>74.4%</strong> of kickoffs were returned
           and the touchback rate dropped from <strong>64.2%</strong> to <strong>20.7%</strong>. Here the rule makers changed the odds, and teams adjusted immediately.</p>
       </div>
-      <div class="chart-card">
+      <div class="chart-card reveal delay">
         <h3>What happened on kickoffs</h3>
         <p class="sub">Share of all kickoffs, regular season</p>
         <div class="chart-box"><canvas id="chart-ko"></canvas></div>
       </div>
     </div>
-  </section>
-
-  <!-- 9 -->
-  <section class="finding" id="f9">
+  </div>
+  </div>
+</section>
+<section class="slide bg-crowd dark" id="f9">
+  <div class="watermark" aria-hidden="true">09</div>
+  <div class="wrap">
+  <div class="finding">
     <div class="tag">Finding 9 &middot; Home field</div>
     <h2>Home-field advantage is fading, and the drop started before COVID emptied the stadiums</h2>
     <div class="finding-body">
-      <div>
+      <div class="reveal">
         <p>Home teams won <strong>58.2%</strong> of games from 2016 to 2018 but only <strong>54.2%</strong> from 2023 to 2025.
           The low point was 2020, when most games were played with few or no fans: home teams won just <strong>49.8%</strong>, less than half.</p>
         <p>The surprise is 2019. With full stadiums, home teams won only <strong>51.8%</strong> and were outscored on average by
           <strong>0.14</strong> points per game, a drop from <strong>60.2%</strong> in 2018. Empty stadiums did not create the decline;
           they arrived in the middle of it.</p>
       </div>
-      <div class="chart-card">
+      <div class="chart-card reveal delay">
         <h3>Home-team win %</h3>
         <p class="sub">Regular-season games, ties excluded; orange bars = 2019 and 2020</p>
         <div class="chart-box"><canvas id="chart-home"></canvas></div>
       </div>
     </div>
-  </section>
+  </div>
+  </div>
+</section>
+<div class="wrap">
 
   <!-- About the data -->
   <section class="method" id="data">
@@ -292,6 +335,7 @@
 
     <p><a class="cta" href="dashboard.html">Explore the data yourself &rarr;</a></p>
   </section>
+</div>
 </main>
 
 <footer class="footer">
@@ -300,6 +344,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="js/common.js"></script>
+<script src="js/effects.js"></script>
+<script src="js/music.js"></script>
 <script src="js/report.js"></script>
 </body>
 </html>
