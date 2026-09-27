@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard | Playing the Odds</title>
+  <meta name="description" content="Filter every NFL play from 2016 to 2025 by season, team, play type, down, quarter and home/away.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono:wght@500;600&family=Oswald:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="brand" href="index.html">Playing the <span>Odds</span></a>
+    <div class="nav-links">
+      <a href="index.html">Report</a>
+      <a href="dashboard.html" class="active">Dashboard</a>
+      <a href="index.html#data">About the data</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="dash-head">
+    <h1>The Play Explorer</h1>
+    <p>Every NFL play from 2016 to 2025. Pick filters, then switch the measure and the breakdown; every number, chart and the table update together.</p>
+  </header>
+
+  <section class="panel" aria-label="Filters">
+    <div class="filters">
+      <div class="field"><label for="f-season">Season</label><select id="f-season"></select></div>
+      <div class="field"><label for="f-stype">Season type</label>
+        <select id="f-stype">
+          <option value="reg">Regular season</option>
+          <option value="post">Playoffs</option>
+          <option value="all">Both</option>
+        </select>
+      </div>
+      <div class="field"><label for="f-team">Team (offense)</label><select id="f-team"></select></div>
+      <div class="field"><label for="f-ptype">Play type</label>
+        <select id="f-ptype">
+          <option value="scrim">Runs &amp; passes</option>
+          <option value="all">All plays</option>
+          <option value="0">Pass</option>
+          <option value="1">Run</option>
+          <option value="2">Punt</option>
+          <option value="3">Field goal</option>
+          <option value="4">Extra point</option>
+          <option value="5">Kickoff</option>
+          <option value="6">Two-point try</option>
+        </select>
+      </div>
+      <div class="field"><label for="f-down">Down</label>
+        <select id="f-down">
+          <option value="all">All downs</option>
+          <option value="1">1st</option>
+          <option value="2">2nd</option>
+          <option value="3">3rd</option>
+          <option value="4">4th</option>
+        </select>
+      </div>
+      <div class="field"><label for="f-qtr">Quarter</label>
+        <select id="f-qtr">
+          <option value="all">All quarters</option>
+          <option value="1">1st</option>
+          <option value="2">2nd</option>
+          <option value="3">3rd</option>
+          <option value="4">4th</option>
+          <option value="5">Overtime</option>
+        </select>
+      </div>
+      <div class="field"><label for="f-home">Home / away</label>
+        <select id="f-home">
+          <option value="all">Both</option>
+          <option value="1">Home offense</option>
+          <option value="0">Away offense</option>
+        </select>
+      </div>
+      <div class="field"><button id="reset" class="btn-reset" type="button">Reset all filters</button></div>
+    </div>
+
+    <div class="switches">
+      <div class="seg" id="sw-measure" role="group" aria-label="Measure">
+        <span class="seg-label">Measure</span>
+        <button type="button" data-v="count">Plays</button>
+        <button type="button" data-v="yds">Yards / play</button>
+        <button type="button" data-v="epa">EPA / play</button>
+        <button type="button" data-v="succ">Success rate</button>
+        <button type="button" data-v="td">TD rate</button>
+        <button type="button" data-v="to">Turnover rate</button>
+      </div>
+      <div class="seg" id="sw-break" role="group" aria-label="Break down by">
+        <span class="seg-label">Break down by</span>
+        <button type="button" data-v="season">Season</button>
+        <button type="button" data-v="team">Team</button>
+        <button type="button" data-v="ptype">Play type</button>
+        <button type="button" data-v="down">Down</button>
+        <button type="button" data-v="qtr">Quarter</button>
+        <button type="button" data-v="home">Home / away</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="loading" class="panel loading">Loading 419,148 plays&hellip;</div>
+
+  <div id="dash" hidden>
+    <section class="stats dash-stats" aria-label="Summary numbers">
+      <div class="stat"><div class="value" id="k-plays">–</div><div class="label">plays in this view</div></div>
+      <div class="stat"><div class="value" id="k-yds">–</div><div class="label">yards per play</div></div>
+      <div class="stat"><div class="value" id="k-epa">–</div><div class="label">EPA per play</div></div>
+      <div class="stat"><div class="value" id="k-succ">–</div><div class="label">success rate (EPA &gt; 0)</div></div>
+      <div class="stat"><div class="value" id="k-pass">–</div><div class="label">pass rate (passes &divide; runs + passes)</div></div>
+      <div class="stat"><div class="value" id="k-go">–</div><div class="label">4th-down go rate</div></div>
+    </section>
+
+    <section class="chart-grid">
+      <div class="chart-card">
+        <h3 id="t-main">–</h3>
+        <p class="sub">All plays in the current filters</p>
+        <div class="chart-box"><canvas id="c-main"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3 id="t-trend">–</h3>
+        <p class="sub">Pass plays vs. run plays, by season (ignores the play-type filter)</p>
+        <div class="chart-box"><canvas id="c-trend"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3 id="t-fourth">–</h3>
+        <p class="sub">Share of 4th downs: go for it, punt or field goal (ignores the play-type and down filters)</p>
+        <div class="chart-box"><canvas id="c-fourth"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3 id="t-split">–</h3>
+        <p class="sub">Pass plays vs. run plays (ignores the play-type filter)</p>
+        <div class="chart-box"><canvas id="c-split"></canvas></div>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Numbers behind the view">
+      <h3 style="margin:0 0 8px" id="t-table">Numbers behind the current view</h3>
+      <div class="table-scroll">
+        <table class="data-table" id="table"></table>
+      </div>
+      <p class="note">Rates use the plays in each row. The 4th-down go rate is go-for-it attempts &divide; (go + punts + field goal tries) on 4th down and ignores the play-type and down filters. Definitions match the <a href="index.html#data">report</a>.</p>
+    </section>
+  </div>
+</main>
+
+<footer class="footer" style="margin-top:32px">
+  <div class="wrap">Jeff Brown &middot; Financial Data Analytics &middot; Data: <a href="https://github.com/nflverse">nflverse</a> &middot; <a href="https://github.com/JeffBrown003/nfl-project">Source code</a></div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="js/common.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>
