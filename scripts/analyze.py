@@ -83,9 +83,11 @@ def main():
     team_season = (fourth.assign(go=is_go).groupby(["season", "offense"])
                    .agg(go_rate=("go", "mean"), attempts=("go", "sum")).reset_index())
     top = team_season.sort_values("go_rate", ascending=False).head(10)
+    coaches = reg.groupby(["season", "offense"]).coach.agg(lambda c: c.mode()[0])
     team_all = fourth.assign(go=is_go).groupby("offense").go.mean().sort_values(ascending=False)
     out["aggressive"] = {
         "top_team_seasons": [{"team": r.offense, "season": int(r.season),
+                              "coach": coaches[(r.season, r.offense)],
                               "go_rate": pct(r.go_rate), "attempts": int(r.attempts)}
                              for r in top.itertuples()],
         "teams_all_years": {k: pct(v) for k, v in team_all.items()},

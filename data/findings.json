@@ -96,60 +96,70 @@
    {
     "team": "DET",
     "season": 2023,
+    "coach": "Dan Campbell",
     "go_rate": 33.9,
     "attempts": 40
    },
    {
     "team": "CAR",
     "season": 2025,
+    "coach": "Dave Canales",
     "go_rate": 32.2,
     "attempts": 39
    },
    {
     "team": "DET",
     "season": 2024,
+    "coach": "Dan Campbell",
     "go_rate": 32.0,
     "attempts": 33
    },
    {
     "team": "BUF",
     "season": 2025,
+    "coach": "Sean McDermott",
     "go_rate": 31.7,
     "attempts": 32
    },
    {
     "team": "DET",
     "season": 2022,
+    "coach": "Dan Campbell",
     "go_rate": 31.6,
     "attempts": 37
    },
    {
     "team": "LAC",
     "season": 2021,
+    "coach": "Brandon Staley",
     "go_rate": 31.5,
     "attempts": 34
    },
    {
     "team": "NYG",
     "season": 2025,
+    "coach": "Brian Daboll",
     "go_rate": 31.5,
     "attempts": 39
    },
    {
     "team": "CLE",
     "season": 2022,
+    "coach": "Kevin Stefanski",
     "go_rate": 31.1,
     "attempts": 42
    },
    {
     "team": "DET",
     "season": 2021,
+    "coach": "Dan Campbell",
     "go_rate": 30.8,
     "attempts": 41
    },
    {
     "team": "CAR",
     "season": 2023,
+    "coach": "Frank Reich",
     "go_rate": 30.4,
     "attempts": 48
    }
