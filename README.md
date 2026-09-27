@@ -1,6 +1,6 @@
 # Playing the Odds: How NFL Coaches Learned to Take Risks
 
-A two-page data website built from every NFL play from 2016 to 2025 (419,148 plays, 2,761 games).
+A data website built from every NFL play from 2016 to 2025 (419,148 plays, 2,761 games).
 
 - **Live site:** https://jeffbrown003.github.io/nfl-project/
 - **Report** (`index.html`): nine findings on fourth downs, run vs. pass, two-point tries, kickers, kickoffs and home-field advantage, each with its numbers and a chart.
@@ -23,7 +23,7 @@ One row in the cleaned data is **one play**. The cleaning script drops no-plays 
 | `index.html` | The report page: summary, headline numbers, nine findings with charts, and the data explanation. |
 | `dashboard.html` | The dashboard page: filters, measure and breakdown switches, summary numbers, four charts, a data table and a reset button. |
 | `matchups.html` | The matchups page: pick two teams to see their head-to-head record, win %, margin chart, season form and every game, plus the league-wide grid. |
-| `css/style.css` | Shared fonts, colors, navigation bar and layout for both pages. |
+| `css/style.css` | Shared fonts, colors, navigation bar, slide backgrounds and layout for all pages. |
 | `js/common.js` | Shared chart colors, Chart.js defaults and number formatting. |
 | `js/report.js` | Draws the report charts from `data/findings.json`. |
 | `js/effects.js` | Shared page effects: scroll progress bar, reveal-on-scroll, count-up numbers, and drawing charts when they scroll into view. Turned off for readers who set "reduce motion". |
