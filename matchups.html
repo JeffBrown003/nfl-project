@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Matchups | Playing the Odds</title>
+  <meta name="description" content="Head-to-head history for any two NFL teams, 2016 to 2025: record, win %, every game and a league-wide grid.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono:wght@500;600&family=Oswald:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="brand" href="index.html">Playing the <span>Odds</span></a>
+    <div class="nav-links">
+      <a href="index.html">Report</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="matchups.html" class="active">Matchups</a>
+      <a href="index.html#data">About the data</a>
+      <button id="music-toggle" class="music-btn" type="button" aria-pressed="false" title="Play an original stadium beat"><span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="music-label">Music off</span></button>
+    </div>
+  </div>
+  <div class="progress" aria-hidden="true"></div>
+</nav>
+
+<header class="matchup-hero">
+  <div class="wrap intro">
+    <p class="kicker">Team vs. team &middot; 2,761 games</p>
+    <h1>Head to Head</h1>
+    <p>Pick any two teams to see every game they played against each other from 2016 to 2025: the record, win %, scores and margins. Or click a square in the league grid below.</p>
+    <div class="picker">
+      <div class="field"><label for="team-a">Team A</label><select id="team-a"></select></div>
+      <button class="swap" id="swap" type="button" title="Swap teams" aria-label="Swap teams">&#8646;</button>
+      <div class="field"><label for="team-b">Team B</label><select id="team-b"></select></div>
+    </div>
+    <div class="picker-extra">
+      <div class="field"><label for="m-type">Games</label>
+        <select id="m-type">
+          <option value="all">Regular season + playoffs</option>
+          <option value="reg">Regular season only</option>
+          <option value="post">Playoffs only</option>
+        </select>
+      </div>
+      <div class="field"><label for="m-from">From season</label><select id="m-from"></select></div>
+      <div class="field"><label for="m-to">To season</label><select id="m-to"></select></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="loading" class="panel loading">Loading games&hellip;</div>
+
+  <div id="content" hidden>
+    <section class="scoreboard" aria-live="polite">
+      <div class="team-card" id="card-a">
+        <div class="abbr" id="a-abbr">–</div>
+        <div class="tname" id="a-name">–</div>
+        <div class="wins" id="a-wins">0</div>
+        <div class="wlabel">wins</div>
+      </div>
+      <div class="vs">VS</div>
+      <div class="team-card right" id="card-b">
+        <div class="abbr" id="b-abbr">–</div>
+        <div class="tname" id="b-name">–</div>
+        <div class="wins" id="b-wins">0</div>
+        <div class="wlabel">wins</div>
+      </div>
+    </section>
+
+    <div class="panel">
+      <div class="leader-bar" aria-hidden="true"><div id="bar-a"></div><div id="bar-t"></div><div id="bar-b"></div></div>
+      <div class="leader-text"><span id="pct-a">–</span><span id="pct-t"></span><span id="pct-b">–</span></div>
+    </div>
+
+    <section class="stats dash-stats" aria-label="Matchup numbers">
+      <div class="stat"><div class="value" id="s-games">–</div><div class="label">games played</div></div>
+      <div class="stat"><div class="value" id="s-margin">–</div><div class="label" id="s-margin-l">average margin</div></div>
+      <div class="stat"><div class="value" id="s-points">–</div><div class="label">average combined points</div></div>
+      <div class="stat"><div class="value" id="s-close">–</div><div class="label">games decided by 7 or less</div></div>
+      <div class="stat"><div class="value" id="s-big">–</div><div class="label" id="s-big-l">biggest win</div></div>
+      <div class="stat"><div class="value" id="s-last">–</div><div class="label" id="s-last-l">last meeting</div></div>
+    </section>
+
+    <section class="chart-grid">
+      <div class="chart-card">
+        <h3 id="t-margin">Game-by-game margin</h3>
+        <p class="sub">Points won by; bars above zero are Team A wins</p>
+        <div class="chart-box"><canvas id="c-margin"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Season-by-season win %</h3>
+        <p class="sub">Each team's regular-season win % against everyone</p>
+        <div class="chart-box"><canvas id="c-form"></canvas></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3 style="margin:0 0 8px">Every game</h3>
+      <div class="table-scroll"><table class="data-table game-list" id="games"></table></div>
+      <p class="note" id="no-games" hidden>These two teams did not play each other with the current filters.</p>
+    </section>
+
+    <section class="panel">
+      <h3 style="margin:0 0 4px">The league grid: every team against every team</h3>
+      <p class="note" style="margin:0 0 10px">Row team's win % against the column team, using the filters above. Blue = row team won more, red = lost more; the number is games played. Click a square to load that matchup.</p>
+      <div class="heat-wrap"><table class="heat" id="heat"></table></div>
+      <div class="heat-legend"><span>0%</span><span class="ramp"></span><span>100%</span><span>&middot; gray = never played</span></div>
+    </section>
+  </div>
+</main>
+
+<footer class="footer" style="margin-top:32px">
+  <div class="wrap">Jeff Brown &middot; Financial Data Analytics &middot; Data: <a href="https://github.com/nflverse">nflverse</a> &middot; <a href="https://github.com/JeffBrown003/nfl-project">Source code</a></div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="js/common.js"></script>
+<script src="js/effects.js"></script>
+<script src="js/music.js"></script>
+<script src="js/matchups.js"></script>
+</body>
+</html>
