@@ -4,13 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Matchups | Playing the Odds</title>
-  <meta name="description" content="Head-to-head history for any two NFL teams, 2016 to 2025: record, win %, every game and a league-wide grid.">
+  <meta name="description" content="Head-to-head history for any two NFL teams, 2016 to 2025, on a stadium LED scoreboard: record, win %, every game, a replay and a league-wide grid.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono:wght@500;600&family=Oswald:wght@500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/matchups.css">
 </head>
-<body>
+<body class="arena">
 
 <nav class="nav">
   <div class="wrap">
@@ -26,100 +27,143 @@
   <div class="progress" aria-hidden="true"></div>
 </nav>
 
-<header class="matchup-hero">
-  <div class="wrap intro">
-    <p class="kicker">Team vs. team &middot; 2,761 games</p>
-    <h1>Head to Head</h1>
-    <p>Pick any two teams to see every game they played against each other from 2016 to 2025: the record, win %, scores and margins. Or click a square in the league grid below.</p>
-    <div class="picker">
-      <div class="field"><label for="team-a">Team A</label><select id="team-a"></select></div>
-      <button class="swap" id="swap" type="button" title="Swap teams" aria-label="Swap teams">&#8646;</button>
-      <div class="field"><label for="team-b">Team B</label><select id="team-b"></select></div>
+<div class="arena-sky" aria-hidden="true">
+  <div class="beam b1"></div><div class="beam b2"></div><div class="beam b3"></div><div class="beam b4"></div>
+</div>
+
+<main>
+  <!-- ====== THE SCOREBOARD ====== -->
+  <section class="board-stage">
+    <div class="board-title"><span>Head</span><em>to</em><span>Head</span></div>
+
+    <div class="board" id="board">
+      <div class="bulbs" aria-hidden="true"></div>
+      <div class="board-inner">
+        <canvas class="led" id="led-top" aria-hidden="true"></canvas>
+
+        <div class="board-main">
+          <div class="board-side">
+            <div class="paint">Home &middot; Team A</div>
+            <canvas class="led" id="led-name-a" aria-hidden="true"></canvas>
+            <div class="digits-box"><canvas class="led" id="led-score-a" aria-hidden="true"></canvas></div>
+            <div class="paint" id="score-label-a">Wins</div>
+          </div>
+
+          <div class="board-center">
+            <div class="paint">Games</div>
+            <div class="digits-box small"><canvas class="led" id="led-games" aria-hidden="true"></canvas></div>
+            <div class="possession" aria-hidden="true"><span class="arrow left" id="poss-a"></span><span class="paint">Series</span><span class="arrow right" id="poss-b"></span></div>
+            <div class="paint">Ties</div>
+            <div class="digits-box tiny"><canvas class="led" id="led-ties" aria-hidden="true"></canvas></div>
+          </div>
+
+          <div class="board-side">
+            <div class="paint">Guest &middot; Team B</div>
+            <canvas class="led" id="led-name-b" aria-hidden="true"></canvas>
+            <div class="digits-box"><canvas class="led" id="led-score-b" aria-hidden="true"></canvas></div>
+            <div class="paint" id="score-label-b">Wins</div>
+          </div>
+        </div>
+
+        <div class="board-stats">
+          <div class="cell"><div class="paint">A win %</div><canvas class="led" id="led-pa" aria-hidden="true"></canvas></div>
+          <div class="cell"><div class="paint">B win %</div><canvas class="led" id="led-pb" aria-hidden="true"></canvas></div>
+          <div class="cell"><div class="paint">Avg margin (A)</div><canvas class="led" id="led-margin" aria-hidden="true"></canvas></div>
+          <div class="cell"><div class="paint">Points / game</div><canvas class="led" id="led-points" aria-hidden="true"></canvas></div>
+          <div class="cell"><div class="paint">Within 7 pts</div><canvas class="led" id="led-close" aria-hidden="true"></canvas></div>
+          <div class="cell"><div class="paint">Playoffs A-B</div><canvas class="led" id="led-playoff" aria-hidden="true"></canvas></div>
+        </div>
+
+        <canvas class="led" id="led-bottom" aria-hidden="true"></canvas>
+      </div>
+      <div class="board-brand">Playing the Odds &middot; Est. 2016</div>
     </div>
-    <div class="picker-extra">
-      <div class="field"><label for="m-type">Games</label>
+    <div class="board-legs" aria-hidden="true"><span></span><span></span></div>
+
+    <!-- Text version of the scoreboard for screen readers -->
+    <p class="sr-only" id="board-text" aria-live="polite"></p>
+
+    <div class="board-controls">
+      <button class="btn-replay" id="replay" type="button"><span class="dot"></span><span id="replay-label">Play the rivalry</span></button>
+      <button class="btn-chip" id="swap" type="button" title="Swap home and guest">&#8646; Swap teams</button>
+      <button class="btn-chip" id="random" type="button" title="Pick a random matchup">&#127922; Random matchup</button>
+      <button class="btn-chip" id="sfx" type="button" aria-pressed="true" title="Turn horn and crowd sounds on or off">&#128227; Stadium sounds: on</button>
+      <label class="chip-select"><span>Games</span>
         <select id="m-type">
           <option value="all">Regular season + playoffs</option>
           <option value="reg">Regular season only</option>
           <option value="post">Playoffs only</option>
         </select>
-      </div>
-      <div class="field"><label for="m-from">From season</label><select id="m-from"></select></div>
-      <div class="field"><label for="m-to">To season</label><select id="m-to"></select></div>
+      </label>
+      <label class="chip-select"><span>From</span><select id="m-from"></select></label>
+      <label class="chip-select"><span>To</span><select id="m-to"></select></label>
     </div>
-  </div>
-</header>
+  </section>
 
-<main class="wrap">
-  <div id="loading" class="panel loading">Loading games&hellip;</div>
-
-  <div id="content" hidden>
-    <section class="scoreboard" aria-live="polite">
-      <div class="team-card" id="card-a">
-        <div class="abbr" id="a-abbr">–</div>
-        <div class="tname" id="a-name">–</div>
-        <div class="wins" id="a-wins">0</div>
-        <div class="wlabel">wins</div>
+  <!-- ====== DRAFT BOARD (team picker) ====== -->
+  <section class="draft-stage wrap">
+    <div class="draft-head">
+      <h2>Pick your matchup</h2>
+      <div class="picking" role="group" aria-label="Which side are you picking">
+        <button type="button" id="pick-a" class="pick-side" aria-pressed="true">Picking: <b>Home (A)</b></button>
+        <button type="button" id="pick-b" class="pick-side" aria-pressed="false">Picking: <b>Guest (B)</b></button>
       </div>
-      <div class="vs">VS</div>
-      <div class="team-card right" id="card-b">
-        <div class="abbr" id="b-abbr">–</div>
-        <div class="tname" id="b-name">–</div>
-        <div class="wins" id="b-wins">0</div>
-        <div class="wlabel">wins</div>
-      </div>
-    </section>
+    </div>
+    <p class="draft-note">Tap a team to put it on the scoreboard. The side you are picking switches automatically.</p>
+    <div class="draft" id="draft"></div>
+  </section>
 
-    <div class="panel">
-      <div class="leader-bar" aria-hidden="true"><div id="bar-a"></div><div id="bar-t"></div><div id="bar-b"></div></div>
-      <div class="leader-text"><span id="pct-a">–</span><span id="pct-t"></span><span id="pct-b">–</span></div>
+  <!-- ====== JUMBOTRON ====== -->
+  <section class="jumbo-stage wrap">
+    <div class="jumbo">
+      <div class="jumbo-head"><span class="rec">&#9679; LIVE</span><span id="jumbo-title">Game-by-game margin</span><span class="jumbo-key" id="jumbo-key"></span></div>
+      <div class="jumbo-screen">
+        <canvas id="led-bars" aria-label="Bar chart of the point margin in every game between the two teams"></canvas>
+        <div class="jumbo-tip" id="jumbo-tip" hidden></div>
+        <div class="scanlines" aria-hidden="true"></div>
+      </div>
+      <div class="jumbo-foot"><span>&#9650; Team A won by</span><span id="jumbo-range"></span><span>Team B won by &#9660;</span></div>
     </div>
 
-    <section class="stats dash-stats" aria-label="Matchup numbers">
-      <div class="stat"><div class="value" id="s-games">–</div><div class="label">games played</div></div>
-      <div class="stat"><div class="value" id="s-margin">–</div><div class="label" id="s-margin-l">average margin</div></div>
-      <div class="stat"><div class="value" id="s-points">–</div><div class="label">average combined points</div></div>
-      <div class="stat"><div class="value" id="s-close">–</div><div class="label">games decided by 7 or less</div></div>
-      <div class="stat"><div class="value" id="s-big">–</div><div class="label" id="s-big-l">biggest win</div></div>
-      <div class="stat"><div class="value" id="s-last">–</div><div class="label" id="s-last-l">last meeting</div></div>
-    </section>
-
-    <section class="chart-grid">
-      <div class="chart-card">
-        <h3 id="t-margin">Game-by-game margin</h3>
-        <p class="sub">Points won by; bars above zero are Team A wins</p>
-        <div class="chart-box"><canvas id="c-margin"></canvas></div>
+    <div class="jumbo-grid">
+      <div class="jumbo small">
+        <div class="jumbo-head"><span class="rec">&#9679; STATS</span><span>Season-by-season win % (regular season, all opponents)</span></div>
+        <div class="jumbo-screen chart"><div class="chart-box"><canvas id="c-form"></canvas></div></div>
       </div>
-      <div class="chart-card">
-        <h3>Season-by-season win %</h3>
-        <p class="sub">Each team's regular-season win % against everyone</p>
-        <div class="chart-box"><canvas id="c-form"></canvas></div>
+      <div class="jumbo small">
+        <div class="jumbo-head"><span class="rec">&#9679; BOX SCORES</span><span>Every game, newest first</span></div>
+        <div class="jumbo-screen list"><div class="table-scroll"><table class="box-table" id="games"></table></div>
+          <p class="note dark" id="no-games" hidden>These two teams did not play each other with the current filters.</p></div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <section class="panel">
-      <h3 style="margin:0 0 8px">Every game</h3>
-      <div class="table-scroll"><table class="data-table game-list" id="games"></table></div>
-      <p class="note" id="no-games" hidden>These two teams did not play each other with the current filters.</p>
-    </section>
+  <!-- ====== LEAGUE GRID ====== -->
+  <section class="grid-stage wrap">
+    <div class="jumbo">
+      <div class="jumbo-head"><span class="rec">&#9679; LEAGUE</span><span>Every team against every team</span></div>
+      <div class="jumbo-screen list">
+        <p class="note dark" style="margin:0 0 10px">Row team's win % against the column team, using the filters above. Blue = row team won more, red = lost more; the number is games played. Click a square to load that matchup.</p>
+        <div class="heat-wrap"><table class="heat dark" id="heat"></table></div>
+        <div class="heat-legend dark"><span>0%</span><span class="ramp"></span><span>100%</span><span>&middot; dark = never played</span></div>
+      </div>
+    </div>
+  </section>
 
-    <section class="panel">
-      <h3 style="margin:0 0 4px">The league grid: every team against every team</h3>
-      <p class="note" style="margin:0 0 10px">Row team's win % against the column team, using the filters above. Blue = row team won more, red = lost more; the number is games played. Click a square to load that matchup.</p>
-      <div class="heat-wrap"><table class="heat" id="heat"></table></div>
-      <div class="heat-legend"><span>0%</span><span class="ramp"></span><span>100%</span><span>&middot; gray = never played</span></div>
-    </section>
-  </div>
+  <div class="crowd" aria-hidden="true"><div class="flashes"></div></div>
 </main>
 
-<footer class="footer" style="margin-top:32px">
-  <div class="wrap">Jeff Brown &middot; Financial Data Analytics &middot; Data: <a href="https://github.com/nflverse">nflverse</a> &middot; <a href="https://github.com/JeffBrown003/nfl-project">Source code</a></div>
+<footer class="footer">
+  <div class="wrap">Jeff Brown &middot; Financial Data Analytics &middot; Data: <a href="https://github.com/nflverse">nflverse</a> &middot; <a href="https://github.com/JeffBrown003/nfl-project">Source code</a> &middot; Scoreboard, music and sound effects are generated in your browser.</div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="js/common.js"></script>
 <script src="js/effects.js"></script>
 <script src="js/music.js"></script>
+<script src="js/led.js"></script>
+<script src="js/sfx.js"></script>
+<script src="js/fireworks.js"></script>
 <script src="js/matchups.js"></script>
 </body>
 </html>

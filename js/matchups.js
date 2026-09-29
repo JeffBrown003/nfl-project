@@ -1,9 +1,14 @@
-// Matchups page: head-to-head history for two teams, from data/matchups.json
-// (made by scripts/build_matchup_data.py). Win % counts a tie as half a win.
+// Matchups page: an LED stadium scoreboard for any two teams, built from
+// data/matchups.json (made by scripts/build_matchup_data.py).
+// Win % counts a tie as half a win. Needs led.js, sfx.js and fireworks.js.
 
 const M = { teams: [], byAbbr: {}, games: [], seasons: [] };
 const sel = { a: "KC", b: "BUF", type: "all", from: 2016, to: 2025 };
-const mcharts = {};
+let picking = "a";
+let replay = { on: false, token: 0 };
+const LED = {};
+let bars = null, formChart = null;
+const AMBER = "#ffb000";
 
 fetch("data/matchups.json")
   .then((r) => r.json())
@@ -13,53 +18,23 @@ fetch("data/matchups.json")
     M.games = d.games.map(([season, week, post, home, away, hs, as]) => ({ season, week, post, home, away, hs, as }));
     M.seasons = [...new Set(M.games.map((g) => g.season))].sort();
     readHash();
-    setupControls();
-    setupCharts();
-    document.getElementById("loading").hidden = true;
-    document.getElementById("content").hidden = false;
+    buildBoard();
+    buildDraft();
+    buildControls();
+    buildForm();
     update();
   })
   .catch((err) => {
     console.error(err);
-    document.getElementById("loading").textContent = "The games could not be loaded. Please refresh the page.";
+    document.getElementById("board-text").textContent = "The games could not be loaded. Please refresh the page.";
   });
 
-// ---------- Controls ----------
+// ---------- Helpers ----------
 
 function readHash() {
-  // e.g. matchups.html#KC-BUF opens that matchup
   const m = location.hash.match(/^#([A-Z]{2,3})-([A-Z]{2,3})$/);
   if (m && M.byAbbr[m[1]] && M.byAbbr[m[2]] && m[1] !== m[2]) { sel.a = m[1]; sel.b = m[2]; }
 }
-
-function setupControls() {
-  const opts = M.teams.map((t) => `<option value="${t.abbr}">${t.name}</option>`).join("");
-  const a = document.getElementById("team-a"), b = document.getElementById("team-b");
-  a.innerHTML = opts; b.innerHTML = opts;
-  const seasonOpts = M.seasons.map((s) => `<option value="${s}">${s}</option>`).join("");
-  document.getElementById("m-from").innerHTML = seasonOpts;
-  document.getElementById("m-to").innerHTML = seasonOpts;
-
-  a.addEventListener("change", () => { sel.a = a.value; if (sel.a === sel.b) sel.b = otherTeam(sel.a); update(); });
-  b.addEventListener("change", () => { sel.b = b.value; if (sel.a === sel.b) sel.a = otherTeam(sel.b); update(); });
-  document.getElementById("swap").addEventListener("click", () => { [sel.a, sel.b] = [sel.b, sel.a]; update(); });
-  document.getElementById("m-type").addEventListener("change", (e) => { sel.type = e.target.value; update(); });
-  document.getElementById("m-from").addEventListener("change", (e) => { sel.from = +e.target.value; if (sel.to < sel.from) sel.to = sel.from; update(); });
-  document.getElementById("m-to").addEventListener("change", (e) => { sel.to = +e.target.value; if (sel.from > sel.to) sel.from = sel.to; update(); });
-}
-
-function otherTeam(abbr) { return M.teams.find((t) => t.abbr !== abbr).abbr; }
-
-function syncControls() {
-  document.getElementById("team-a").value = sel.a;
-  document.getElementById("team-b").value = sel.b;
-  document.getElementById("m-type").value = sel.type;
-  document.getElementById("m-from").value = sel.from;
-  document.getElementById("m-to").value = sel.to;
-  history.replaceState(null, "", `#${sel.a}-${sel.b}`);
-}
-
-// ---------- Data helpers ----------
 
 function inFilters(g) {
   if (g.season < sel.from || g.season > sel.to) return false;
@@ -68,11 +43,19 @@ function inFilters(g) {
   return true;
 }
 
-// Result from one team's side: +margin if they won
 function sideOf(g, team) {
   const isHome = g.home === team;
   const pf = isHome ? g.hs : g.as, pa = isHome ? g.as : g.hs;
-  return { pf, pa, margin: pf - pa, isHome, opp: isHome ? g.away : g.home };
+  return { pf, pa, margin: pf - pa, isHome };
+}
+
+// Playoff round from the week number (the season grew to 17 games in 2021)
+function roundName(g, short = false) {
+  if (!g.post) return short ? `WK ${g.week}` : `Week ${g.week}`;
+  const i = g.week - (g.season >= 2021 ? 19 : 18);
+  const long = ["Wild Card", "Divisional", "Conference Championship", "Super Bowl"][i] || "Playoffs";
+  const brief = ["WILD CARD", "DIVISIONAL", "CONF CHAMP", "SUPER BOWL"][i] || "PLAYOFFS";
+  return short ? brief : long;
 }
 
 function hexToRgb(h) {
@@ -85,166 +68,354 @@ function colorDistance(x, y) {
   return Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2);
 }
 
-// Team B uses its second color if its main color is too close to Team A's
+// LED colors for both teams; Team B switches to its 2nd color if the two clash
 function teamColors() {
   const A = M.byAbbr[sel.a], B = M.byAbbr[sel.b];
-  let cb = B.color;
-  if (colorDistance(A.color, cb) < 90) cb = colorDistance(A.color, B.color2) >= 90 ? B.color2 : "#6b7280";
-  return [A.color, cb];
+  const baseA = isGray(A.color) ? A.color2 : A.color;
+  let baseB = isGray(B.color) ? B.color2 : B.color;
+  if (colorDistance(baseA, baseB) < 90) {
+    const alt = baseB === B.color ? B.color2 : B.color;
+    baseB = colorDistance(baseA, alt) >= 90 && !isGray(alt) ? alt : "#b0b7bc";
+  }
+  return [ledColor(baseA), ledColor(baseB), baseA, baseB];
 }
 
-// ---------- Charts ----------
+// True for black, white and gray colors (no clear hue)
+function isGray(hex) {
+  const [r, g, b] = hexToRgb(hex);
+  return Math.max(r, g, b) - Math.min(r, g, b) < 30;
+}
 
-function setupCharts() {
-  mcharts.margin = new Chart(document.getElementById("c-margin"), {
-    type: "bar",
-    data: { labels: [], datasets: [{ label: "Margin", data: [], backgroundColor: [], maxBarThickness: 34 }] },
+function matchupGames() {
+  return M.games
+    .filter((g) => inFilters(g) && ((g.home === sel.a && g.away === sel.b) || (g.home === sel.b && g.away === sel.a)))
+    .sort((x, y) => x.season - y.season || x.week - y.week);
+}
+
+function summarize(games) {
+  const s = { n: games.length, aw: 0, bw: 0, ties: 0, margin: 0, points: 0, close: 0, poA: 0, poB: 0 };
+  games.forEach((g) => {
+    const r = sideOf(g, sel.a);
+    if (r.margin > 0) { s.aw++; if (g.post) s.poA++; }
+    else if (r.margin < 0) { s.bw++; if (g.post) s.poB++; }
+    else s.ties++;
+    s.margin += r.margin;
+    s.points += g.hs + g.as;
+    if (Math.abs(r.margin) <= 7) s.close++;
+  });
+  s.pa = s.n ? ((s.aw + s.ties / 2) / s.n) * 100 : NaN;
+  s.pb = s.n ? ((s.bw + s.ties / 2) / s.n) * 100 : NaN;
+  return s;
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// ---------- Build the scoreboard ----------
+
+function buildBoard() {
+  const L = (id, opts) => (LED[id] = new LEDDisplay(document.getElementById("led-" + id), opts));
+  L("top", { cols: 150, scroll: true, speed: 22, color: AMBER });
+  L("bottom", { cols: 150, scroll: true, speed: 20, color: AMBER });
+  L("name-a", { cols: 59, pad: 1 });
+  L("name-b", { cols: 59, pad: 1 });
+  L("score-a", { cols: 13, pad: 1 });
+  L("score-b", { cols: 13, pad: 1 });
+  L("games", { cols: 19, pad: 1, color: AMBER });
+  L("ties", { cols: 13, pad: 1, color: AMBER });
+  ["pa", "pb", "margin", "points", "close", "playoff"].forEach((id) => L(id, { cols: 35, pad: 1, color: AMBER }));
+
+  bars = new LEDBars(document.getElementById("led-bars"), { rows: 35 });
+  const tip = document.getElementById("jumbo-tip");
+  const canvas = document.getElementById("led-bars");
+  canvas.addEventListener("mousemove", (e) => {
+    const i = bars.barAtX(e.offsetX);
+    const games = matchupGames();
+    if (i < 0 || !games[i] || replay.on) { tip.hidden = true; return; }
+    const g = games[i], r = sideOf(g, sel.a);
+    const A = M.byAbbr[sel.a], B = M.byAbbr[sel.b];
+    tip.innerHTML = `<b>${g.season} &middot; ${roundName(g)}</b><br>${r.isHome ? B.abbr + " at " + A.abbr : A.abbr + " at " + B.abbr}: ${A.abbr} ${r.pf}&ndash;${r.pa} ${B.abbr}`;
+    tip.style.left = e.offsetX + 14 + "px";
+    tip.style.top = e.offsetY + 14 + "px";
+    tip.hidden = false;
+  });
+  canvas.addEventListener("mouseleave", () => (tip.hidden = true));
+}
+
+// ---------- Draft board ----------
+
+function buildDraft() {
+  const order = ["AFC East", "AFC North", "AFC South", "AFC West", "NFC East", "NFC North", "NFC South", "NFC West"];
+  const html = order.map((div) => {
+    const teams = M.teams.filter((t) => t.div === div);
+    return `<div class="div-card"><h3>${div}</h3><div class="div-teams">` +
+      teams.map((t) => `<button type="button" class="tile" data-team="${t.abbr}" title="${t.name}"
+        style="background:linear-gradient(150deg, ${t.color} 0%, ${t.color} 55%, ${t.color2} 140%);--glow:${ledColor(t.color, t.color2)}">
+        <div class="t-abbr">${t.abbr}</div><div class="t-nick">${t.nick}</div></button>`).join("") +
+      "</div></div>";
+  }).join("");
+  const draft = document.getElementById("draft");
+  draft.innerHTML = html;
+  draft.addEventListener("click", (e) => {
+    const tile = e.target.closest(".tile");
+    if (!tile) return;
+    const t = tile.dataset.team;
+    if (picking === "a") { if (t === sel.b) sel.b = sel.a; sel.a = t; setPicking("b"); }
+    else { if (t === sel.a) sel.a = sel.b; sel.b = t; setPicking("a"); }
+    stopReplay();
+    update();
+    SFX.tick();
+    document.getElementById("board").scrollIntoView({ behavior: REDUCED_MOTION ? "auto" : "smooth", block: "center" });
+  });
+}
+
+function setPicking(side) {
+  picking = side;
+  document.getElementById("pick-a").setAttribute("aria-pressed", String(side === "a"));
+  document.getElementById("pick-b").setAttribute("aria-pressed", String(side === "b"));
+}
+
+function markTiles() {
+  document.querySelectorAll(".tile").forEach((el) => {
+    const t = el.dataset.team;
+    el.classList.toggle("is-a", t === sel.a);
+    el.classList.toggle("is-b", t === sel.b);
+    const old = el.querySelector(".badge");
+    if (old) old.remove();
+    if (t === sel.a || t === sel.b) el.insertAdjacentHTML("beforeend", `<span class="badge">${t === sel.a ? "A" : "B"}</span>`);
+  });
+}
+
+// ---------- Controls ----------
+
+function buildControls() {
+  const seasonOpts = M.seasons.map((s) => `<option value="${s}">${s}</option>`).join("");
+  document.getElementById("m-from").innerHTML = seasonOpts;
+  document.getElementById("m-to").innerHTML = seasonOpts;
+  const on = (id, ev, fn) => document.getElementById(id).addEventListener(ev, fn);
+  on("m-type", "change", (e) => { sel.type = e.target.value; stopReplay(); update(); });
+  on("m-from", "change", (e) => { sel.from = +e.target.value; if (sel.to < sel.from) sel.to = sel.from; stopReplay(); update(); });
+  on("m-to", "change", (e) => { sel.to = +e.target.value; if (sel.from > sel.to) sel.from = sel.to; stopReplay(); update(); });
+  on("swap", "click", () => { [sel.a, sel.b] = [sel.b, sel.a]; stopReplay(); update(); SFX.tick(); });
+  on("random", "click", () => {
+    const pool = M.games.filter(inFilters);
+    const g = pool[Math.floor(Math.random() * pool.length)];
+    if (g) { sel.a = g.home; sel.b = g.away; stopReplay(); update(); SFX.tick(); }
+  });
+  on("sfx", "click", (e) => {
+    SFX.enabled = !SFX.enabled;
+    e.currentTarget.setAttribute("aria-pressed", String(SFX.enabled));
+    e.currentTarget.innerHTML = `&#128227; Stadium sounds: ${SFX.enabled ? "on" : "off"}`;
+  });
+  on("replay", "click", () => (replay.on ? stopReplay(true) : runReplay()));
+  on("pick-a", "click", () => setPicking("a"));
+  on("pick-b", "click", () => setPicking("b"));
+}
+
+// ---------- Season form chart (dark jumbotron style) ----------
+
+function buildForm() {
+  const line = () => ({ label: "", data: [], borderColor: "#fff", backgroundColor: "#fff", pointBorderColor: "#020203", pointBorderWidth: 2, spanGaps: true, borderWidth: 2.5 });
+  formChart = new Chart(document.getElementById("c-form"), {
+    type: "line",
+    data: { labels: [], datasets: [line(), line()] },
     options: {
-      interaction: { mode: "nearest", axis: "x", intersect: false },
-      scales: { x: { grid: { display: false } }, y: { ticks: { callback: (v) => (v > 0 ? "+" : "") + v } } },
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => " " + mcharts.margin.$labels[c.dataIndex] } } },
+      scales: {
+        y: { min: 0, max: 100, grid: { color: "#171b21" }, ticks: { color: "#8d97a6", callback: (v) => v + "%" } },
+        x: { grid: { color: "#171b21" }, ticks: { color: "#8d97a6" } },
+      },
+      plugins: {
+        legend: { labels: { color: "#dfe5ee" } },
+        tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${fmt.pct(c.parsed.y)}` } },
+      },
     },
   });
-  const line = (color) => ({ label: "", data: [], borderColor: color, backgroundColor: color, pointBorderColor: "#fcfcfb", pointBorderWidth: 2, spanGaps: true });
-  mcharts.form = new Chart(document.getElementById("c-form"), {
-    type: "line",
-    data: { labels: [], datasets: [line(COLORS.s1), line(COLORS.s2)] },
-    options: {
-      scales: { y: { min: 0, max: 100, ticks: { callback: (v) => v + "%" } } },
-      plugins: { tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${fmt.pct(c.parsed.y)}` } } },
-    },
+}
+
+function seasonForm(team) {
+  return M.seasons.map((season) => {
+    if (season < sel.from || season > sel.to) return null;
+    let w = 0, n = 0;
+    M.games.forEach((x) => {
+      if (x.season !== season || x.post || (x.home !== team && x.away !== team)) return;
+      const r = sideOf(x, team);
+      n++; w += r.margin > 0 ? 1 : r.margin === 0 ? 0.5 : 0;
+    });
+    return n ? (w / n) * 100 : null;
   });
 }
 
 // ---------- Render ----------
 
-function setText(id, t) { document.getElementById(id).textContent = t; }
+function showStats(s) {
+  const sc = (v) => ({ scramble: true, color: AMBER, v });
+  LED.pa.set(s.n ? s.pa.toFixed(1) + "%" : "-", sc());
+  LED.pb.set(s.n ? s.pb.toFixed(1) + "%" : "-", sc());
+  const m = s.n ? s.margin / s.n : NaN;
+  LED.margin.set(s.n ? (m > 0 ? "+" : "") + m.toFixed(1) : "-", sc());
+  LED.points.set(s.n ? (s.points / s.n).toFixed(1) : "-", sc());
+  LED.close.set(s.n ? `${s.close}/${s.n}` : "-", sc());
+  LED.playoff.set(s.n ? `${s.poA}-${s.poB}` : "-", sc());
+  LED.ties.set(String(s.ties), sc());
+  document.getElementById("poss-a").classList.toggle("on", s.aw > s.bw);
+  document.getElementById("poss-b").classList.toggle("on", s.bw > s.aw);
+}
+
+function gameLog(games, A, B, ca, cb) {
+  if (!games.length) return [["NO GAMES BETWEEN THESE TEAMS WITH THESE FILTERS", AMBER]];
+  const pieces = [];
+  games.slice().reverse().forEach((g) => {
+    const r = sideOf(g, sel.a);
+    pieces.push([`${g.season} ${roundName(g, true)}  `, AMBER]);
+    pieces.push([`${A.abbr} ${r.pf}`, r.margin >= 0 ? ca : "#8d97a6"]);
+    pieces.push(["  ", AMBER]);
+    pieces.push([`${B.abbr} ${r.pa}`, r.margin <= 0 ? cb : "#8d97a6"]);
+    pieces.push(["   *   ", AMBER]);
+  });
+  return pieces;
+}
 
 function update() {
-  syncControls();
+  history.replaceState(null, "", `#${sel.a}-${sel.b}`);
+  document.getElementById("m-type").value = sel.type;
+  document.getElementById("m-from").value = sel.from;
+  document.getElementById("m-to").value = sel.to;
+  markTiles();
+
   const A = M.byAbbr[sel.a], B = M.byAbbr[sel.b];
   const [ca, cb] = teamColors();
+  const games = matchupGames();
+  const s = summarize(games);
 
-  const games = M.games
-    .filter((g) => inFilters(g) && ((g.home === sel.a && g.away === sel.b) || (g.home === sel.b && g.away === sel.a)))
-    .sort((x, y) => x.season - y.season || x.week - y.week);
+  LED["name-a"].set(A.nick, { color: ca, scramble: true });
+  LED["name-b"].set(B.nick, { color: cb, scramble: true });
+  LED["score-a"].set(String(s.aw), { color: ca, scramble: true });
+  LED["score-b"].set(String(s.bw), { color: cb, scramble: true });
+  document.getElementById("score-label-a").textContent = "Wins";
+  document.getElementById("score-label-b").textContent = "Wins";
+  LED.games.set(String(s.n), { color: AMBER, scramble: true });
+  showStats(s);
 
-  let aw = 0, bw = 0, ties = 0, marginSum = 0, pointsSum = 0, close = 0;
-  let bigA = null, bigB = null;
-  games.forEach((g) => {
-    const s = sideOf(g, sel.a);
-    if (s.margin > 0) aw++; else if (s.margin < 0) bw++; else ties++;
-    marginSum += s.margin;
-    pointsSum += g.hs + g.as;
-    if (Math.abs(s.margin) <= 7) close++;
-    if (s.margin > 0 && (!bigA || s.margin > bigA.m)) bigA = { m: s.margin, g };
-    if (s.margin < 0 && (!bigB || -s.margin > bigB.m)) bigB = { m: -s.margin, g };
+  const leader = s.aw > s.bw ? `${A.abbr} LEADS ${s.aw}-${s.bw}` : s.bw > s.aw ? `${B.abbr} LEADS ${s.bw}-${s.aw}` : s.n ? `SERIES TIED ${s.aw}-${s.bw}` : "NO MEETINGS";
+  const span = sel.from === sel.to ? `${sel.from}` : `${sel.from}-${sel.to}`;
+  const typeTxt = { all: "", reg: " REGULAR SEASON", post: " PLAYOFF" }[sel.type];
+  LED.top.scroll = true;
+  LED.top.set([
+    [A.name, ca], ["  VS  ", AMBER], [B.name, cb],
+    [`   *   ${s.n}${typeTxt} MEETING${s.n === 1 ? "" : "S"} ${span}   *   ${leader}   *   PRESS PLAY THE RIVALRY FOR THE REPLAY   *`, AMBER],
+  ]);
+  LED.bottom.scroll = true;
+  LED.bottom.set(gameLog(games, A, B, ca, cb));
+
+  // Jumbotron bars
+  bars.visible = Infinity;
+  bars.highlight = -1;
+  bars.setBars(games.map((g) => { const m = sideOf(g, sel.a).margin; return { value: m, color: m >= 0 ? ca : cb }; }));
+  const maxA = Math.max(0, ...games.map((g) => sideOf(g, sel.a).margin));
+  const maxB = Math.max(0, ...games.map((g) => -sideOf(g, sel.a).margin));
+  document.getElementById("jumbo-range").textContent = games.length ? `Biggest wins: ${A.abbr} by ${maxA} · ${B.abbr} by ${maxB}` : "";
+  document.getElementById("jumbo-title").textContent = `Game-by-game margin: ${A.abbr} vs ${B.abbr}`;
+  document.getElementById("jumbo-key").innerHTML =
+    `<span><i style="background:${ca};color:${ca}"></i>${A.abbr} won</span><span><i style="background:${cb};color:${cb}"></i>${B.abbr} won</span>`;
+
+  // Season form
+  formChart.data.labels = M.seasons;
+  [[sel.a, ca], [sel.b, cb]].forEach(([t, c], i) => {
+    const ds = formChart.data.datasets[i];
+    ds.label = t; ds.data = seasonForm(t); ds.borderColor = c; ds.backgroundColor = c;
   });
-  const n = games.length;
+  formChart.update();
 
-  // Scoreboard
-  document.getElementById("card-a").style.background = `linear-gradient(135deg, ${ca}, ${shade(ca)})`;
-  document.getElementById("card-b").style.background = `linear-gradient(225deg, ${cb}, ${shade(cb)})`;
-  setText("a-abbr", A.abbr); setText("a-name", A.name);
-  setText("b-abbr", B.abbr); setText("b-name", B.name);
-  bump("a-wins", aw); bump("b-wins", bw);
-
-  const pa = n ? ((aw + ties / 2) / n) * 100 : 0;
-  const pb = n ? ((bw + ties / 2) / n) * 100 : 0;
-  const barA = document.getElementById("bar-a"), barB = document.getElementById("bar-b"), barT = document.getElementById("bar-t");
-  barA.style.width = n ? (aw / n) * 100 + "%" : "50%"; barA.style.background = ca;
-  barT.style.width = n ? (ties / n) * 100 + "%" : "0%"; barT.style.background = "#9ca3af";
-  barB.style.width = n ? (bw / n) * 100 + "%" : "50%"; barB.style.background = cb;
-  setText("pct-a", n ? `${A.nick} win %: ${fmt.pct(pa)}` : "No games");
-  setText("pct-t", ties ? `${ties} tie${ties > 1 ? "s" : ""}` : "");
-  setText("pct-b", n ? `${B.nick} win %: ${fmt.pct(pb)}` : "");
-
-  // Stat tiles
-  setText("s-games", n);
-  const avg = n ? marginSum / n : NaN;
-  setText("s-margin", n ? (avg > 0 ? "+" : "") + avg.toFixed(1) : "–");
-  setText("s-margin-l", `average margin, from the ${A.nick}' side`);
-  setText("s-points", n ? (pointsSum / n).toFixed(1) : "–");
-  setText("s-close", n ? `${close} of ${n}` : "–");
-  const big = bigA && (!bigB || bigA.m >= bigB.m) ? { ...bigA, t: A } : bigB ? { ...bigB, t: B } : null;
-  setText("s-big", big ? `${big.t.abbr} +${big.m}` : "–");
-  setText("s-big-l", big ? `biggest win (${big.g.season}${big.g.post ? " playoffs" : `, week ${big.g.week}`})` : "biggest win");
-  const last = games[games.length - 1];
-  if (last) {
-    const s = sideOf(last, sel.a);
-    const winner = s.margin > 0 ? A.abbr : s.margin < 0 ? B.abbr : "Tie";
-    setText("s-last", `${winner} ${Math.max(last.hs, last.as)}–${Math.min(last.hs, last.as)}`);
-    setText("s-last-l", `last meeting (${last.season}${last.post ? " playoffs" : `, week ${last.week}`})`);
-  } else { setText("s-last", "–"); setText("s-last-l", "last meeting"); }
-
-  // Margin chart
-  mcharts.margin.data.labels = games.map((g) => `${g.season}${g.post ? " PO" : " W" + g.week}`);
-  mcharts.margin.$labels = games.map((g) => {
-    const s = sideOf(g, sel.a);
-    const at = s.isHome ? `${B.abbr} at ${A.abbr}` : `${A.abbr} at ${B.abbr}`;
-    return `${at}: ${A.abbr} ${s.pf}–${s.pa} ${B.abbr}`;
-  });
-  mcharts.margin.data.datasets[0].data = games.map((g) => sideOf(g, sel.a).margin);
-  mcharts.margin.data.datasets[0].backgroundColor = games.map((g) => (sideOf(g, sel.a).margin >= 0 ? ca : cb));
-  setText("t-margin", `Game-by-game margin (${A.abbr} points minus ${B.abbr} points)`);
-  mcharts.margin.update();
-
-  // Season form: each team's regular-season win % (against all teams)
-  const form = (team) => M.seasons.map((season) => {
-    if (season < sel.from || season > sel.to) return null;
-    let w = 0, g = 0;
-    M.games.forEach((x) => {
-      if (x.season !== season || x.post || (x.home !== team && x.away !== team)) return;
-      const s = sideOf(x, team);
-      g++; w += s.margin > 0 ? 1 : s.margin === 0 ? 0.5 : 0;
-    });
-    return g ? (w / g) * 100 : null;
-  });
-  mcharts.form.data.labels = M.seasons;
-  mcharts.form.data.datasets[0].label = A.abbr;
-  mcharts.form.data.datasets[0].data = form(sel.a);
-  mcharts.form.data.datasets[1].label = B.abbr;
-  mcharts.form.data.datasets[1].data = form(sel.b);
-  [ca, cb].forEach((c, i) => {
-    mcharts.form.data.datasets[i].borderColor = c;
-    mcharts.form.data.datasets[i].backgroundColor = c;
-  });
-  mcharts.form.update();
-
-  // Game list (newest first)
+  // Box scores
   const rows = games.slice().reverse().map((g) => {
-    const s = sideOf(g, sel.a);
-    const winner = s.margin > 0 ? A.abbr : s.margin < 0 ? B.abbr : "Tie";
-    const where = s.isHome ? `at ${A.abbr}` : `at ${B.abbr}`;
-    return `<tr><td>${g.season}${g.post ? '<span class="pill">Playoffs</span>' : ""}</td><td>${g.post ? "Week " + g.week + " (playoffs)" : "Week " + g.week}</td><td>${where}</td>` +
-      `<td class="${s.margin > 0 ? "win" : ""}">${s.pf}</td><td class="${s.margin < 0 ? "win" : ""}">${s.pa}</td><td>${winner}</td><td>${s.margin > 0 ? "+" : ""}${s.margin}</td></tr>`;
+    const r = sideOf(g, sel.a);
+    const winner = r.margin > 0 ? A.abbr : r.margin < 0 ? B.abbr : "Tie";
+    return `<tr><td>${g.season}${g.post ? '<span class="pill">Playoffs</span>' : ""}</td><td>${roundName(g)}</td><td>at ${r.isHome ? A.abbr : B.abbr}</td>` +
+      `<td class="${r.margin > 0 ? "win" : ""}">${r.pf}</td><td class="${r.margin < 0 ? "win" : ""}">${r.pa}</td><td>${winner}</td><td>${r.margin > 0 ? "+" : ""}${r.margin}</td></tr>`;
   }).join("");
-  document.getElementById("games").innerHTML = n
-    ? `<thead><tr><th>Season</th><th>Week</th><th>Where</th><th>${A.abbr}</th><th>${B.abbr}</th><th>Winner</th><th>${A.abbr} margin</th></tr></thead><tbody>${rows}</tbody>`
+  document.getElementById("games").innerHTML = games.length
+    ? `<thead><tr><th>Season</th><th>Game</th><th>Where</th><th>${A.abbr}</th><th>${B.abbr}</th><th>Winner</th><th>${A.abbr} margin</th></tr></thead><tbody>${rows}</tbody>`
     : "";
-  document.getElementById("no-games").hidden = n > 0;
+  document.getElementById("no-games").hidden = games.length > 0;
+
+  // Screen-reader summary of the board
+  document.getElementById("board-text").textContent = s.n
+    ? `${A.name} ${s.aw} wins, ${B.name} ${s.bw} wins${s.ties ? ", " + s.ties + " ties" : ""}, in ${s.n} games. ${A.nick} win rate ${fmt.pct(s.pa)}, ${B.nick} ${fmt.pct(s.pb)}.`
+    : `${A.name} and ${B.name} did not play each other with these filters.`;
 
   renderHeat();
 }
 
-// Darker version of a hex color, for card gradients
-function shade(hex) {
-  const [r, g, b] = hexToRgb(hex).map((v) => Math.round(v * 0.55));
-  return `rgb(${r}, ${g}, ${b})`;
+// ---------- Replay: play through every game on the scoreboard ----------
+
+function stopReplay(restore = false) {
+  if (!replay.on) return;
+  replay.on = false;
+  replay.token++;
+  const btn = document.getElementById("replay");
+  btn.classList.remove("playing");
+  document.getElementById("replay-label").textContent = "Play the rivalry";
+  if (restore) update();
 }
 
-// Scoreboard digits count up to the new value
-function bump(id, value) {
-  const el = document.getElementById(id);
-  const from = +el.textContent || 0;
-  if (REDUCED_MOTION || from === value) { el.textContent = value; return; }
-  const t0 = performance.now();
-  const step = (now) => {
-    const p = Math.min(1, (now - t0) / 600);
-    el.textContent = Math.round(from + (value - from) * p);
-    if (p < 1) requestAnimationFrame(step);
-  };
-  requestAnimationFrame(step);
+async function runReplay() {
+  const games = matchupGames();
+  if (!games.length) return;
+  const token = ++replay.token;
+  replay.on = true;
+  const btn = document.getElementById("replay");
+  btn.classList.add("playing");
+  document.getElementById("replay-label").textContent = "Stop replay";
+  document.getElementById("board").scrollIntoView({ behavior: REDUCED_MOTION ? "auto" : "smooth", block: "center" });
+
+  const A = M.byAbbr[sel.a], B = M.byAbbr[sel.b];
+  const [ca, cb, rawA, rawB] = teamColors();
+  const alive = () => replay.on && replay.token === token;
+
+  // Kickoff
+  document.getElementById("score-label-a").textContent = "Points";
+  document.getElementById("score-label-b").textContent = "Points";
+  LED.bottom.scroll = false; LED.bottom.running = false; LED.bottom.offset = 0;
+  LED.bottom.set(`KICKOFF: ${games.length} GAME${games.length > 1 ? "S" : ""}`, { color: AMBER, scramble: true });
+  LED["score-a"].set("0", { color: ca }); LED["score-b"].set("0", { color: cb });
+  bars.visible = 0; bars.highlight = -1; bars.draw();
+  SFX.whistle();
+  await sleep(1100);
+
+  for (let i = 0; i < games.length; i++) {
+    if (!alive()) return;
+    const g = games[i], r = sideOf(g, sel.a);
+    LED["score-a"].set(String(r.pf), { color: ca, scramble: true });
+    LED["score-b"].set(String(r.pa), { color: cb, scramble: true });
+    LED.games.set(`${i + 1}`, { color: AMBER, scramble: true });
+    LED.bottom.set([[`${g.season} ${roundName(g, true)}   `, AMBER], [r.margin > 0 ? `${A.abbr} WINS` : r.margin < 0 ? `${B.abbr} WINS` : "TIE", r.margin > 0 ? ca : r.margin < 0 ? cb : AMBER]], { scramble: true });
+    showStats(summarize(games.slice(0, i + 1)));
+    bars.visible = i + 1; bars.highlight = i; bars.draw();
+    const board = document.getElementById("board");
+    board.classList.add("celebrate");
+    setTimeout(() => board.classList.remove("celebrate"), 450);
+    if (r.margin !== 0) SFX.horn(0.55, r.margin > 0 ? 1 : 0.84);
+    SFX.crowd(1.3, 0.35 + Math.min(0.4, 7 / (Math.abs(r.margin) + 7) * 0.4));
+    await sleep(games.length > 14 ? 1100 : 1600);
+  }
+  if (!alive()) return;
+
+  // Final
+  const s = summarize(games);
+  const winner = s.aw > s.bw ? A : s.bw > s.aw ? B : null;
+  document.getElementById("score-label-a").textContent = "Wins";
+  document.getElementById("score-label-b").textContent = "Wins";
+  LED["score-a"].set(String(s.aw), { color: ca, scramble: true });
+  LED["score-b"].set(String(s.bw), { color: cb, scramble: true });
+  LED.games.set(String(s.n), { color: AMBER, scramble: true });
+  LED.bottom.set(winner ? [["SERIES WINNER  ", AMBER], [winner.abbr, winner === A ? ca : cb], [`  ${Math.max(s.aw, s.bw)}-${Math.min(s.aw, s.bw)}`, AMBER]] : [["SERIES TIED", AMBER]], { scramble: true });
+  bars.highlight = -1; bars.draw();
+  SFX.horn(1.6, 1); SFX.crowd(3.5, 0.8);
+  if (winner) {
+    const raw = winner === A ? rawA : rawB;
+    Fireworks.celebrate([ledColor(raw), ledColor(winner.color2, winner.color), "#ffffff", "#ffd23f"]);
+  }
+  await sleep(4500);
+  if (alive()) stopReplay(true);
 }
 
 // ---------- League grid ----------
@@ -255,8 +426,8 @@ function mix(c1, c2, t) {
 }
 
 function heatColor(p) {
-  // 0% red -> 50% gray -> 100% blue (diverging, neutral midpoint)
-  return p < 0.5 ? mix("#e34948", "#f0efec", p / 0.5) : mix("#f0efec", "#2a78d6", (p - 0.5) / 0.5);
+  // red (lost more) -> dark neutral (even) -> blue (won more)
+  return p < 0.5 ? mix("#e34948", "#2a2f37", p / 0.5) : mix("#2a2f37", "#3987e5", (p - 0.5) / 0.5);
 }
 
 function renderHeat() {
@@ -272,7 +443,6 @@ function renderHeat() {
     const hw = x.hs > x.as ? 1 : x.hs === x.as ? 0.5 : 0;
     w[h][a] += hw; w[a][h] += 1 - hw;
   });
-
   let html = "<thead><tr><th></th>" + abbrs.map((a) => `<th scope="col">${a}</th>`).join("") + "</tr></thead><tbody>";
   for (let r = 0; r < N; r++) {
     html += `<tr><th scope="row">${abbrs[r]}</th>`;
@@ -280,9 +450,8 @@ function renderHeat() {
       if (r === c) { html += '<td class="self"></td>'; continue; }
       if (!g[r][c]) { html += `<td class="none" title="${abbrs[r]} and ${abbrs[c]} did not play"></td>`; continue; }
       const p = w[r][c] / g[r][c];
-      const isSel = (abbrs[r] === sel.a && abbrs[c] === sel.b);
-      const txt = Math.abs(p - 0.5) > 0.3 ? "#fff" : "#0f1c2e";
-      html += `<td class="${isSel ? "sel" : ""}" data-r="${abbrs[r]}" data-c="${abbrs[c]}" style="background:${heatColor(p)};color:${txt}" title="${abbrs[r]} vs ${abbrs[c]}: ${fmt.pct(p * 100)} in ${g[r][c]} game${g[r][c] > 1 ? "s" : ""}">${g[r][c]}</td>`;
+      const isSel = abbrs[r] === sel.a && abbrs[c] === sel.b;
+      html += `<td class="${isSel ? "sel" : ""}" data-r="${abbrs[r]}" data-c="${abbrs[c]}" style="background:${heatColor(p)};color:#fff" title="${abbrs[r]} vs ${abbrs[c]}: ${fmt.pct(p * 100)} in ${g[r][c]} game${g[r][c] > 1 ? "s" : ""}">${g[r][c]}</td>`;
     }
     html += "</tr>";
   }
@@ -292,7 +461,9 @@ function renderHeat() {
     const td = e.target.closest("td[data-r]");
     if (!td) return;
     sel.a = td.dataset.r; sel.b = td.dataset.c;
+    stopReplay();
     update();
-    document.querySelector(".scoreboard").scrollIntoView({ behavior: REDUCED_MOTION ? "auto" : "smooth", block: "center" });
+    SFX.tick();
+    document.getElementById("board").scrollIntoView({ behavior: REDUCED_MOTION ? "auto" : "smooth", block: "center" });
   };
 }
