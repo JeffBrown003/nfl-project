@@ -1,4 +1,5 @@
-/* Matchups page: night arena, LED scoreboard, draft board and jumbotron. */
+/* Shared arena look for every page: night arena, LED scoreboard, jumbotron frames,
+   plus page-specific parts for the matchups, report and dashboard pages. */
 
 body.arena {
   background:
@@ -434,3 +435,374 @@ body.arena .footer { position: relative; z-index: 1; margin-top: 0; }
 .board-main > *, .board-stats > *, .jumbo-grid > *, .draft > * { min-width: 0; }
 canvas.led, #led-bars { max-width: 100%; }
 .board-controls { padding-inline: 4px; }
+
+/* =====================================================================
+   Shared by the report and dashboard
+   ===================================================================== */
+
+/* ---------- Every chart card becomes a jumbotron screen ---------- */
+
+.chart-card,
+.slide .chart-card,
+.slide.dark .chart-card {
+  position: relative;
+  background: #020203;
+  color: #e6ebf2;
+  border: 8px solid #1c1f24;
+  border-radius: 12px;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 0 0 0 2px #3a3f47, 0 26px 60px rgba(0, 0, 0, 0.55), 0 0 60px rgba(80, 140, 255, 0.07);
+}
+.chart-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 9px 14px;
+  background: #15171b;
+  border-bottom: 1px solid #262a30;
+  font-family: var(--font-head);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.82rem;
+  color: #dfe5ee;
+}
+.chart-card h3::before {
+  content: "\25CF  LIVE";
+  flex: none;
+  color: #ff3b3b;
+  text-shadow: 0 0 8px #ff3b3b;
+  animation: blink 1.4s steps(2) infinite;
+}
+.chart-card .sub { margin: 0; padding: 8px 14px 0; color: #8d97a6; }
+.chart-card .chart-box { margin: 8px 14px 14px; }
+.chart-card::after {
+  content: "";
+  position: absolute;
+  inset: 40px 0 0 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(180deg, rgba(255,255,255,0.03) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.45) 100%);
+}
+
+/* LED readouts next to the text of each finding */
+.led-chips { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 10px; margin: 2px 0 18px; }
+.led-chip {
+  background: #000;
+  border: 3px solid #1a1a1a;
+  border-radius: 7px;
+  padding: 4px 8px 8px;
+  box-shadow: inset 0 0 14px rgba(0,0,0,0.9), 0 0 0 1px #33373e, 0 10px 24px rgba(0,0,0,0.35);
+}
+.led-chip .paint { font-size: 0.62rem; letter-spacing: 0.14em; margin: 3px 0 4px; }
+
+/* =====================================================================
+   Report page
+   ===================================================================== */
+
+body.arena.report main { overflow: visible; }
+body.arena .hero.stadium { z-index: 1; }
+
+/* LED ticker along the bottom of the hero */
+.ticker.led-ticker { padding: 6px 0; background: #000; }
+.ticker.led-ticker canvas { display: block; width: 100%; }
+
+/* Headline numbers on a scoreboard */
+.headline-board { max-width: 1120px; margin: 34px auto 0; }
+.headline-board .board-stats { grid-template-columns: repeat(6, minmax(0, 1fr)); margin: 0; padding: 0; border: 0; }
+.headline-board .cell { padding: 6px 8px 10px; }
+.headline-board .caption { font-size: 0.72rem; color: #8d97a6; text-align: center; margin-top: 6px; line-height: 1.3; }
+.headline-board .board-brand { margin-top: 10px; }
+@media (max-width: 900px) { .headline-board .board-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .headline-board .board-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Table of contents as a playbook */
+body.arena .toc {
+  position: relative;
+  margin-block: 40px 30px;
+  padding: 22px 26px;
+  color: #e9edf3;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='180'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='0.06' stroke-width='3' stroke-linecap='round'%3E%3Ccircle cx='40' cy='40' r='13'/%3E%3Ccircle cx='150' cy='120' r='13'/%3E%3Cpath d='M100 28l22 22M122 28l-22 22M20 118l22 22M42 118l-22 22'/%3E%3Cpath d='M40 60c10 40 50 50 90 50' stroke-dasharray='6 8'/%3E%3C/g%3E%3C/svg%3E"),
+    linear-gradient(160deg, #1b2626, #121a1a);
+  border: 1px solid #2a3535;
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+body.arena .toc h2 { color: #ffb000; font-size: 0.95rem; letter-spacing: 0.24em; margin-bottom: 14px; }
+body.arena .toc ol { list-style: none; padding: 0; counter-reset: play; columns: 2 300px; }
+body.arena .toc li { counter-increment: play; display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+body.arena .toc li::before {
+  content: counter(play, decimal-leading-zero);
+  flex: none;
+  width: 38px; height: 38px;
+  display: grid; place-items: center;
+  font-family: var(--font-head);
+  font-size: 1.1rem;
+  color: #fff;
+  background: linear-gradient(180deg, #eb6834, #b8431a);
+  border-radius: 6px;
+  box-shadow: inset 0 -3px 0 rgba(0,0,0,0.25), 0 4px 10px rgba(0,0,0,0.4);
+}
+body.arena .toc a { color: #e9edf3; font-size: 1rem; }
+body.arena .toc a:hover { color: #ffb000; text-decoration: none; }
+
+/* "About the data" as an official game program */
+body.arena .method {
+  position: relative;
+  margin: 60px auto 70px;
+  padding: 44px clamp(20px, 5vw, 56px) 48px;
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(255,255,255,0.6), transparent 60%),
+    #f4efe3;
+  color: #1d2533;
+  border-radius: 6px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.6), inset 0 0 0 10px #f4efe3, inset 0 0 0 12px #c9b98f;
+}
+body.arena .method::before {
+  content: "Official Game Program \00B7  Data & Methods";
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-1.5deg);
+  white-space: nowrap;
+  font-family: var(--font-head);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.8rem;
+  color: #fff;
+  background: #b8431a;
+  padding: 6px 16px;
+  border-radius: 3px;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.35);
+}
+body.arena .method h2 { color: #0f1c2e; }
+body.arena .method p, body.arena .method li { color: #2b3444; }
+body.arena .method .defs th, body.arena .method .defs td { border-color: #d9cfb6; }
+body.arena .method a { color: #b8431a; }
+
+/* Drive chart: a mini field on the right edge that tracks your place in the report */
+.drive {
+  position: fixed;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  width: 46px;
+  height: min(62vh, 520px);
+  border-radius: 10px;
+  background:
+    repeating-linear-gradient(180deg, rgba(255,255,255,0.35) 0 1px, transparent 1px 10%),
+    repeating-linear-gradient(180deg, #1f6b3f 0 5%, #236f43 5% 10%);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.5), 0 12px 30px rgba(0,0,0,0.6);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s;
+}
+.drive.show { opacity: 1; pointer-events: auto; }
+.drive::before, .drive::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0;
+  height: 8%;
+  background: repeating-linear-gradient(135deg, #eb6834 0 6px, #c9531f 6px 12px);
+  opacity: 0.85;
+}
+.drive::before { top: 0; border-radius: 10px 10px 0 0; }
+.drive::after { bottom: 0; border-radius: 0 0 10px 10px; }
+.drive button {
+  position: absolute;
+  left: 50%;
+  width: 22px;
+  height: 22px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.8);
+  background: rgba(0,0,0,0.35);
+  color: #fff;
+  font-family: var(--font-head);
+  font-size: 0.7rem;
+  cursor: pointer;
+  z-index: 2;
+  padding: 0;
+}
+.drive button.done { background: #ffb000; border-color: #ffb000; color: #111; }
+.drive button span {
+  position: absolute;
+  right: 32px;
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  background: rgba(8,10,14,0.95);
+  border: 1px solid #3a3f47;
+  color: #e6ebf2;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.drive button:hover span, .drive button:focus-visible span { opacity: 1; }
+.drive .ball {
+  position: absolute;
+  left: 50%;
+  width: 30px;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  pointer-events: none;
+  transition: top 0.6s cubic-bezier(.3,1.4,.5,1);
+  filter: drop-shadow(0 3px 4px rgba(0,0,0,0.6));
+}
+@media (max-width: 1240px) { .drive { display: none; } }
+
+/* Kickoff countdown overlay */
+.kickoff {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(ellipse at 50% 40%, #10192a 0%, #03050a 70%);
+  transition: opacity 0.5s, visibility 0.5s;
+  cursor: pointer;
+}
+.kickoff.gone { opacity: 0; visibility: hidden; }
+.kickoff .board { width: min(640px, 88vw); padding: 22px; }
+.kickoff .board-inner { padding: 18px; }
+.kickoff .skip { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); color: #8d97a6; font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* =====================================================================
+   Dashboard page
+   ===================================================================== */
+
+.booth-head { padding: 34px 16px 0; text-align: center; }
+.booth-head .board-title { margin-bottom: 8px; font-size: clamp(2.2rem, 7vw, 4.6rem); }
+.booth-head p { color: #aab4c3; max-width: 760px; margin: 0 auto 18px; }
+.booth-marquee { max-width: 1120px; margin: 0 auto; padding: 8px; background: #000; border-radius: 8px; box-shadow: 0 0 0 3px #1c1f24, 0 0 0 5px #3a3f47, 0 20px 40px rgba(0,0,0,0.5); }
+
+/* Control console */
+.console {
+  position: relative;
+  margin-top: 22px;
+  padding: 22px 22px 18px;
+  border-radius: 14px;
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 4px),
+    linear-gradient(180deg, #2f343c 0%, #1b1e23 100%);
+  box-shadow: 0 30px 70px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -2px 0 rgba(0,0,0,0.5);
+  border: 1px solid #0c0d10;
+}
+.console::before, .console::after {
+  /* screws in the corners */
+  content: "";
+  position: absolute;
+  top: 9px;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #d6dbe2, #6b7380 60%, #2a2e35);
+  box-shadow: 0 1px 1px rgba(0,0,0,0.6);
+}
+.console::before { left: 9px; }
+.console::after { right: 9px; }
+.console .field label { color: #efe8d2; font-family: var(--font-head); letter-spacing: 0.16em; font-weight: 500; font-size: 0.72rem; }
+.console .field select {
+  background: #07080a;
+  color: #ffb000;
+  border: 1px solid #3a3f47;
+  font-family: var(--font-num);
+  font-size: 0.85rem;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.8);
+  text-shadow: 0 0 6px rgba(255,176,0,0.5);
+}
+.console .field select option { color: #0f1c2e; background: #fff; text-shadow: none; }
+.console .switches { border-top: 1px solid rgba(0,0,0,0.5); box-shadow: 0 -1px 0 rgba(255,255,255,0.06); }
+.console .seg .seg-label { color: #efe8d2; font-family: var(--font-head); letter-spacing: 0.16em; font-weight: 500; }
+.console .seg button {
+  position: relative;
+  padding: 7px 12px 7px 26px;
+  background: linear-gradient(180deg, #3b414a, #262a31);
+  color: #d5dbe4;
+  border: 1px solid #0d0e11;
+  border-radius: 5px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 2px 0 #0d0e11;
+  font-family: var(--font-head);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+.console .seg button::before {
+  /* indicator light */
+  content: "";
+  position: absolute;
+  left: 10px; top: 50%;
+  width: 8px; height: 8px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: #3a2a10;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.7);
+}
+.console .seg button[aria-pressed="true"] {
+  background: linear-gradient(180deg, #2a2d33, #1a1c20);
+  color: #ffb000;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.7), 0 0 0 1px #ffb000;
+  text-shadow: 0 0 8px rgba(255,176,0,0.6);
+}
+.console .seg button[aria-pressed="true"]::before { background: #ffb000; box-shadow: 0 0 10px #ffb000, 0 0 3px #fff inset; }
+.console .btn-reset {
+  width: 100%;
+  padding: 10px 14px;
+  background: repeating-linear-gradient(135deg, #d63a1a 0 10px, #b52d10 10px 20px);
+  border: 2px solid #1a0a05;
+  box-shadow: 0 0 0 3px #f2c230, 0 6px 16px rgba(214,58,26,0.5);
+  font-size: 0.95rem;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.4);
+}
+.console .btn-reset:active { transform: translateY(1px); }
+
+/* LED summary board */
+.dash-board { margin-top: 22px; }
+.dash-board .board-stats { margin: 0; padding: 0; border: 0; }
+.dash-board .cell .caption { font-size: 0.68rem; color: #8d97a6; text-align: center; margin-top: 4px; }
+
+/* Dashboard table in a jumbotron frame */
+body.arena .panel.jumbo-panel {
+  background: #020203;
+  border: 8px solid #1c1f24;
+  border-radius: 12px;
+  padding: 0;
+  box-shadow: 0 0 0 2px #3a3f47, 0 24px 60px rgba(0,0,0,0.55);
+  overflow: hidden;
+}
+body.arena .panel.jumbo-panel h3 {
+  margin: 0 !important;
+  padding: 9px 14px;
+  background: #15171b;
+  border-bottom: 1px solid #262a30;
+  font-family: var(--font-head);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.82rem;
+  color: #dfe5ee;
+}
+body.arena .panel.jumbo-panel .table-scroll { padding: 6px 14px 4px; }
+body.arena .panel.jumbo-panel .note { padding: 0 14px 12px; color: #8d97a6; }
+body.arena .panel.jumbo-panel .note a { color: #ffb000; }
+body.arena .data-table th { color: #8d97a6; border-color: #1f2329; font-family: var(--font-head); font-weight: 500; letter-spacing: 0.1em; }
+body.arena .data-table td { color: #c9d1dc; border-color: #14171b; }
+body.arena .data-table tr:hover td { background: rgba(255,255,255,0.03); }
+body.arena .data-table tr.total td { background: #0f1115 !important; color: #ffb000; text-shadow: 0 0 8px rgba(255,176,0,0.5); font-weight: 600; }
+body.arena .loading { background: #000; border: 0; color: #ffb000; font-family: var(--font-num); letter-spacing: 0.2em; text-shadow: 0 0 10px rgba(255,176,0,0.6); }
+
+@media (prefers-reduced-motion: reduce) {
+  .kickoff { display: none; }
+}
+
+/* Light slides (route tree, coin toss) keep dark text on the dark-theme site */
+body.arena .slide:not(.dark) { color: #0f1c2e; }
+body.arena .slide:not(.dark) .finding h2 { color: #0f1c2e; }
