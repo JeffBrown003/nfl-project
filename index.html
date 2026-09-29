@@ -9,8 +9,27 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono:wght@500;600&family=Oswald:wght@500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/arena.css">
 </head>
-<body>
+<body class="arena report">
+
+<div class="kickoff gone" id="kickoff" role="presentation">
+  <div class="board"><div class="bulbs" aria-hidden="true"></div><div class="board-inner"><canvas class="led" id="led-kickoff" aria-hidden="true"></canvas></div></div>
+  <div class="skip">Click anywhere to skip</div>
+</div>
+<script>
+  // Show the kickoff countdown once per visit; report.js runs it. Clicking skips it.
+  (function () {
+    var k = document.getElementById("kickoff");
+    try {
+      if (!sessionStorage.getItem("kickoff-seen") && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        k.classList.remove("gone");
+        setTimeout(function () { k.classList.add("gone"); }, 5000);   // safety net
+      }
+    } catch (e) {}
+    k.addEventListener("click", function () { k.classList.add("gone"); });
+  })();
+</script>
 
 <nav class="nav">
   <div class="wrap">
@@ -25,6 +44,10 @@
   </div>
   <div class="progress" aria-hidden="true"></div>
 </nav>
+
+<div class="arena-sky" aria-hidden="true">
+  <div class="beam b1"></div><div class="beam b2"></div><div class="beam b3"></div><div class="beam b4"></div>
+</div>
 
 <header class="hero stadium">
   <div class="lights" aria-hidden="true"><span></span><span></span></div>
@@ -46,21 +69,21 @@
     </p>
     <div class="hero-cta"><a class="cta" href="#f1">Start the report &darr;</a><a class="btn-ghost" href="dashboard.html">Open the dashboard</a><a class="btn-ghost" href="matchups.html">Team vs. team</a></div>
   </div>
-  <div class="ticker" aria-hidden="true"><div class="ticker-track">
-    <span>4TH-DOWN GO RATE <b>23.3%</b> <span class="up">&#9650; +10.5 pts since 2016</span></span><span>4TH &amp; 1 CONVERSION <b>67.1%</b></span><span>DET 2023 GO RATE <b>33.9%</b> <span class="up">&#9650; #1 of 320</span></span><span>PASS&ndash;RUN SUCCESS GAP <b>1.7 pts</b> <span class="down">&#9660; from 5.8</span></span><span>2-PT TRY <b>0.94 pts</b> = XP <b>0.94 pts</b></span><span>50+ YD FG <b>68.8%</b> <span class="up">&#9650; from 56.7%</span></span><span>KICKOFFS RETURNED <b>74.4%</b> <span class="up">&#9650; from 25.2%</span></span><span>HOME WIN % <b>54.2%</b> <span class="down">&#9660; from 58.2%</span></span><span>4TH-DOWN GO RATE <b>23.3%</b> <span class="up">&#9650; +10.5 pts since 2016</span></span><span>4TH &amp; 1 CONVERSION <b>67.1%</b></span><span>DET 2023 GO RATE <b>33.9%</b> <span class="up">&#9650; #1 of 320</span></span><span>PASS&ndash;RUN SUCCESS GAP <b>1.7 pts</b> <span class="down">&#9660; from 5.8</span></span><span>2-PT TRY <b>0.94 pts</b> = XP <b>0.94 pts</b></span><span>50+ YD FG <b>68.8%</b> <span class="up">&#9650; from 56.7%</span></span><span>KICKOFFS RETURNED <b>74.4%</b> <span class="up">&#9650; from 25.2%</span></span><span>HOME WIN % <b>54.2%</b> <span class="down">&#9660; from 58.2%</span></span>
-  </div></div>
+  <div class="ticker led-ticker" aria-hidden="true"><canvas id="led-ticker"></canvas></div>
 </header>
 
 <main>
 <div class="wrap">
 
-  <section class="stats over" aria-label="Headline numbers">
-    <div class="stat"><div class="value" data-count>419,148</div><div class="label">plays analyzed, 2016&ndash;2025 seasons</div></div>
-    <div class="stat"><div class="value" data-count>23.3%</div><div class="label">of 4th downs went for it in 2025 (12.8% in 2016)</div></div>
-    <div class="stat"><div class="value" data-count>63.9%</div><div class="label">go-for-it rate on 4th and 2 or less in 2025 (34.0% in 2016)</div></div>
-    <div class="stat"><div class="value" data-count>53.4%</div><div class="label">of 4th-down attempts were converted, 2016&ndash;2025</div></div>
-    <div class="stat"><div class="value" data-count>74.4%</div><div class="label">of kickoffs were returned in 2025 (25.2% in 2023)</div></div>
-    <div class="stat"><div class="value" data-count>54.2%</div><div class="label">home-team win rate, 2023&ndash;2025 (58.2% in 2016&ndash;2018)</div></div>
+  <section class="headline-board" aria-label="Headline numbers">
+    <div class="board"><div class="bulbs" aria-hidden="true"></div><div class="board-inner"><div class="board-stats">
+      <div class="cell"><div class="paint">Plays analyzed</div><canvas class="led" data-led="419,148" aria-hidden="true"></canvas><div class="caption">2016&ndash;2025 seasons</div><span class="sr-only">419,148 plays analyzed, 2016 to 2025 seasons</span></div>
+      <div class="cell"><div class="paint">4th-down go rate</div><canvas class="led" data-led="23.3%" aria-hidden="true"></canvas><div class="caption">in 2025 (12.8% in 2016)</div><span class="sr-only">23.3% of 4th downs went for it in 2025, up from 12.8% in 2016</span></div>
+      <div class="cell"><div class="paint">Go rate, 4th &amp; short</div><canvas class="led" data-led="63.9%" aria-hidden="true"></canvas><div class="caption">4th &amp; 2 or less, 2025 (34.0% in 2016)</div><span class="sr-only">63.9% go-for-it rate on 4th and 2 or less in 2025, up from 34.0% in 2016</span></div>
+      <div class="cell"><div class="paint">4th downs converted</div><canvas class="led" data-led="53.4%" aria-hidden="true"></canvas><div class="caption">of go-for-it attempts, 2016&ndash;2025</div><span class="sr-only">53.4% of 4th-down attempts were converted, 2016 to 2025</span></div>
+      <div class="cell"><div class="paint">Kickoffs returned</div><canvas class="led" data-led="74.4%" aria-hidden="true"></canvas><div class="caption">in 2025 (25.2% in 2023)</div><span class="sr-only">74.4% of kickoffs were returned in 2025, up from 25.2% in 2023</span></div>
+      <div class="cell"><div class="paint">Home-team win rate</div><canvas class="led" data-led="54.2%" aria-hidden="true"></canvas><div class="caption">2023&ndash;2025 (58.2% in 2016&ndash;2018)</div><span class="sr-only">Home teams won 54.2% of games in 2023 to 2025, down from 58.2% in 2016 to 2018</span></div>
+    </div></div><div class="board-brand">The Scoreboard &middot; 2016&ndash;2025</div></div>
   </section>
 
   <nav class="toc" aria-label="Findings">
@@ -87,6 +110,7 @@
     <h2>Coaches go for it on fourth down nearly twice as often as they did in 2016</h2>
     <div class="finding-body">
       <div class="reveal">
+        <div class="led-chips" data-chips="f1" aria-hidden="true"></div>
         <p>In 2016, teams went for it on <strong>12.8%</strong> of fourth downs and punted or kicked a field goal on the rest.
           By 2025 that share had climbed to <strong>23.3%</strong>. That is <strong>882</strong> fourth-down attempts in a season, up from <strong>477</strong>.</p>
         <p>The change is even bigger when only a yard or two is needed. On 4th and 2 or less, the go-for-it rate rose from
@@ -110,6 +134,7 @@
     <h2>Short fourth downs are a good bet: 4th and 1 is converted two times out of three</h2>
     <div class="finding-body">
       <div class="reveal">
+        <div class="led-chips" data-chips="f2" aria-hidden="true"></div>
         <p>Across all ten seasons, teams converted <strong>53.4%</strong> of their fourth-down attempts. Distance is everything.
           On 4th and 1 the success rate is <strong>67.1%</strong> (2,648 attempts); on 4th and 2 it is <strong>59.3%</strong>.
           It falls to <strong>50.1%</strong> at 3&ndash;5 yards, <strong>35.8%</strong> at 6&ndash;10 yards and <strong>20.8%</strong> at 11 or more.</p>
@@ -134,6 +159,7 @@
     <h2>Dan Campbell's Detroit Lions own four of the ten most aggressive seasons</h2>
     <div class="finding-body">
       <div class="reveal">
+        <div class="led-chips" data-chips="f3" aria-hidden="true"></div>
         <p>Ranking every team-season by fourth-down go rate, the <strong>2023 Lions</strong> top the list at <strong>33.9%</strong>.
           Detroit under head coach Dan Campbell appears four times in the top ten (2021, 2022, 2023 and 2024), and Carolina appears twice.
           Every one of the ten most aggressive seasons came in 2021 or later.</p>
@@ -157,6 +183,7 @@
     <h2>Aggressive teams seem to lose more, until you remove the desperate situations</h2>
     <div class="finding-body">
       <div class="reveal">
+        <div class="led-chips" data-chips="f4" aria-hidden="true"></div>
         <p>A naive look says aggression loses. Splitting the 320 team-seasons into four equal groups by overall go rate, the least aggressive quarter
           won <strong>55.0%</strong> of their games and the most aggressive won just <strong>44.4%</strong>. But that is backwards cause and effect:
           teams that are losing late in games <em>have</em> to go for it.</p>
@@ -181,6 +208,7 @@
     <h2>Passing still pays more, but running has nearly caught up</h2>
     <div class="finding-body">
       <div class="reveal">
+        <div class="led-chips" data-chips="f5" aria-hidden="true"></div>
         <p>The analytics message of the 2010s was simple: pass more. In 2016 a pass play succeeded (gained positive EPA) <strong>45.6%</strong> of the time,
           versus <strong>39.8%</strong> for a run. By 2025 the run success rate had risen to <strong>43.0%</strong> while passing slipped to <strong>44.7%</strong>,
           shrinking a 5.8-point gap to 1.7 points.</p>
@@ -205,6 +233,7 @@
     <h2>A two-point try is a coin flip that pays exactly what an extra point does</h2>
     <div class="finding-body">
       <div class="reveal">
+        <div class="led-chips" data-chips="f6" aria-hidden="true"></div>
         <p>From 2016 to 2025, teams converted <strong>47.2%</strong> of two-point tries. Worth two points each, that is an expected
           <strong>0.94</strong> points per try. Extra points were good <strong>94.3%</strong> of the time, also <strong>0.94</strong> expected points.</p>
         <p>With the payoff equal on average, the choice only matters in specific game situations, which is why attempts stayed rare
@@ -228,6 +257,7 @@
     <h2>Kickers made the 50-yard field goal routine, and coaches noticed</h2>
     <div class="finding-body">
       <div class="reveal">
+        <div class="led-chips" data-chips="f7" aria-hidden="true"></div>
         <p>In 2016 kickers made <strong>56.7%</strong> of field goals from 50 yards or more. In 2025 they made <strong>68.8%</strong>.
           Coaches responded by trying far more of them: <strong>266</strong> attempts from 50+ in 2025 (and a peak of <strong>279</strong> in 2024),
           up from <strong>150</strong> in 2016.</p>
@@ -251,6 +281,7 @@
     <h2>The kickoff came back from the dead after two rule changes</h2>
     <div class="finding-body">
       <div class="reveal">
+        <div class="led-chips" data-chips="f8" aria-hidden="true"></div>
         <p>For years about four in ten kickoffs were returned (<strong>39.4%</strong> in 2016, <strong>37.5%</strong> in 2022).
           In 2023 a fair catch inside the 25 began counting as a touchback, and the return rate fell to <strong>25.2%</strong>.</p>
         <p>The league then redesigned the play. The new kickoff format in 2024 lifted returns to <strong>32.8%</strong>, and after
@@ -274,6 +305,7 @@
     <h2>Home-field advantage is fading, and the drop started before COVID emptied the stadiums</h2>
     <div class="finding-body">
       <div class="reveal">
+        <div class="led-chips" data-chips="f9" aria-hidden="true"></div>
         <p>Home teams won <strong>58.2%</strong> of games from 2016 to 2018 but only <strong>54.2%</strong> from 2023 to 2025.
           The low point was 2020, when most games were played with few or no fans: home teams won just <strong>49.8%</strong>, less than half.</p>
         <p>The surprise is 2019. With full stadiums, home teams won only <strong>51.8%</strong> and were outscored on average by
@@ -338,6 +370,8 @@
 </div>
 </main>
 
+<nav class="drive" id="drive" aria-label="Jump to a finding"></nav>
+
 <footer class="footer">
   <div class="wrap">Jeff Brown &middot; Financial Data Analytics &middot; Data: <a href="https://github.com/nflverse">nflverse</a> &middot; <a href="https://github.com/JeffBrown003/nfl-project">Source code</a></div>
 </footer>
@@ -345,6 +379,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="js/common.js"></script>
 <script src="js/effects.js"></script>
+<script src="js/led.js"></script>
 <script src="js/music.js"></script>
 <script src="js/report.js"></script>
 </body>
