@@ -9,8 +9,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono:wght@500;600&family=Oswald:wght@500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/arena.css">
 </head>
-<body>
+<body class="arena">
 
 <nav class="nav">
   <div class="wrap">
@@ -26,17 +27,19 @@
   <div class="progress" aria-hidden="true"></div>
 </nav>
 
-<header class="matchup-hero">
-  <div class="wrap intro">
-    <p class="kicker">Dashboard &middot; 419,148 plays</p>
-    <h1>The Play Explorer</h1>
-    <p>Every NFL play from 2016 to 2025. Pick filters, then switch the measure and the breakdown; every number, chart and the table update together.</p>
-  </div>
+<div class="arena-sky" aria-hidden="true">
+  <div class="beam b1"></div><div class="beam b2"></div><div class="beam b3"></div><div class="beam b4"></div>
+</div>
+
+<header class="booth-head">
+  <h1 class="board-title"><span>The Play</span> <em>&middot;</em> <span>Explorer</span></h1>
+  <p>Every NFL play from 2016 to 2025, from the broadcast booth. Set the controls, switch the measure and the breakdown, and every number, chart and the table update together.</p>
+  <div class="booth-marquee"><canvas class="led" id="led-marquee" aria-hidden="true"></canvas></div>
 </header>
 
 <main class="wrap">
 
-  <section class="panel" aria-label="Filters">
+  <section class="console" aria-label="Filters">
     <div class="filters">
       <div class="field"><label for="f-season">Season</label><select id="f-season"></select></div>
       <div class="field"><label for="f-stype">Season type</label>
@@ -86,7 +89,7 @@
           <option value="0">Away offense</option>
         </select>
       </div>
-      <div class="field"><button id="reset" class="btn-reset" type="button">Reset all filters</button></div>
+      <div class="field"><button id="reset" class="btn-reset" type="button">Reset filters</button></div>
     </div>
 
     <div class="switches">
@@ -111,16 +114,18 @@
     </div>
   </section>
 
-  <div id="loading" class="panel loading">Loading 419,148 plays&hellip;</div>
+  <div id="loading" class="panel loading" style="margin-top:22px">Loading 419,148 plays&hellip;</div>
 
   <div id="dash" hidden>
-    <section class="stats dash-stats" aria-label="Summary numbers">
-      <div class="stat"><div class="value" id="k-plays">–</div><div class="label">plays in this view</div></div>
-      <div class="stat"><div class="value" id="k-yds">–</div><div class="label">yards per play</div></div>
-      <div class="stat"><div class="value" id="k-epa">–</div><div class="label">EPA per play</div></div>
-      <div class="stat"><div class="value" id="k-succ">–</div><div class="label">success rate (EPA &gt; 0)</div></div>
-      <div class="stat"><div class="value" id="k-pass">–</div><div class="label">pass rate (passes &divide; runs + passes)</div></div>
-      <div class="stat"><div class="value" id="k-go">–</div><div class="label">4th-down go rate</div></div>
+    <section class="headline-board dash-board" aria-label="Summary numbers">
+      <div class="board"><div class="bulbs" aria-hidden="true"></div><div class="board-inner"><div class="board-stats">
+        <div class="cell"><div class="paint">Plays</div><canvas class="led" data-for="k-plays" aria-hidden="true"></canvas><div class="caption">in this view</div><span class="sr-only">Plays: <span id="k-plays">–</span></span></div>
+        <div class="cell"><div class="paint">Yards / play</div><canvas class="led" data-for="k-yds" aria-hidden="true"></canvas><div class="caption">average gain</div><span class="sr-only">Yards / play: <span id="k-yds">–</span></span></div>
+        <div class="cell"><div class="paint">EPA / play</div><canvas class="led" data-for="k-epa" aria-hidden="true"></canvas><div class="caption">expected points added</div><span class="sr-only">EPA / play: <span id="k-epa">–</span></span></div>
+        <div class="cell"><div class="paint">Success rate</div><canvas class="led" data-for="k-succ" aria-hidden="true"></canvas><div class="caption">plays with EPA &gt; 0</div><span class="sr-only">Success rate: <span id="k-succ">–</span></span></div>
+        <div class="cell"><div class="paint">Pass rate</div><canvas class="led" data-for="k-pass" aria-hidden="true"></canvas><div class="caption">passes &divide; runs + passes</div><span class="sr-only">Pass rate: <span id="k-pass">–</span></span></div>
+        <div class="cell"><div class="paint">4th-down go rate</div><canvas class="led" data-for="k-go" aria-hidden="true"></canvas><div class="caption">go &divide; go + punt + FG</div><span class="sr-only">4th-down go rate: <span id="k-go">–</span></span></div>
+      </div></div><div class="board-brand">Live from the booth</div></div>
     </section>
 
     <section class="chart-grid">
@@ -146,7 +151,7 @@
       </div>
     </section>
 
-    <section class="panel" aria-label="Numbers behind the view">
+    <section class="panel jumbo-panel" aria-label="Numbers behind the view">
       <h3 style="margin:0 0 8px" id="t-table">Numbers behind the current view</h3>
       <div class="table-scroll">
         <table class="data-table" id="table"></table>
@@ -156,13 +161,14 @@
   </div>
 </main>
 
-<footer class="footer" style="margin-top:32px">
+<footer class="footer" style="margin-top:40px">
   <div class="wrap">Jeff Brown &middot; Financial Data Analytics &middot; Data: <a href="https://github.com/nflverse">nflverse</a> &middot; <a href="https://github.com/JeffBrown003/nfl-project">Source code</a></div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="js/common.js"></script>
 <script src="js/effects.js"></script>
+<script src="js/led.js"></script>
 <script src="js/music.js"></script>
 <script src="js/dashboard.js"></script>
 </body>

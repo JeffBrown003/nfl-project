@@ -210,14 +210,14 @@ function buildCharts() {
       plugins: { legend: { display: false }, tooltip: { callbacks: { label: tooltipFmt } } } },
   });
 
-  const line = (label, color) => ({ label, data: [], borderColor: color, backgroundColor: color, pointBorderColor: "#fcfcfb", pointBorderWidth: 2 });
+  const line = (label, color) => ({ label, data: [], borderColor: color, backgroundColor: color, pointBorderColor: "#020203", pointBorderWidth: 2 });
   charts.trend = new Chart(document.getElementById("c-trend"), {
     type: "line",
     data: { labels: [], datasets: [line("Pass", COLORS.s1), line("Run", COLORS.s2)] },
     options: { scales: { y: { ticks: yTicks } }, plugins: { tooltip: { callbacks: { label: tooltipFmt } } } },
   });
 
-  const bar = (label, color) => ({ label, data: [], backgroundColor: color, borderColor: "#fcfcfb", borderWidth: 2, borderSkipped: false, maxBarThickness: 40 });
+  const bar = (label, color) => ({ label, data: [], backgroundColor: color, borderColor: "#020203", borderWidth: 2, borderSkipped: false, maxBarThickness: 40 });
   charts.fourth = new Chart(document.getElementById("c-fourth"), {
     type: "bar",
     data: { labels: [], datasets: [bar("Go for it", COLORS.s2), bar("Field goal", COLORS.s1), bar("Punt", COLORS.muted)] },
@@ -235,7 +235,42 @@ function buildCharts() {
   });
 }
 
-function setText(id, text) { document.getElementById(id).textContent = text; }
+const LEDSTAT = {};        // LED readouts for the summary numbers, keyed by element id
+let MARQUEE = null;
+let TEAMCOLOR = {};        // team abbreviation -> LED color (from data/matchups.json)
+
+function setText(id, text) {
+  document.getElementById(id).textContent = text;
+  if (LEDSTAT[id]) LEDSTAT[id].set(text.replace(/–/g, "-"), { scramble: true });
+}
+
+function buildLED() {
+  document.querySelectorAll(".dash-board canvas[data-for]").forEach((c) => {
+    LEDSTAT[c.dataset.for] = new LEDDisplay(c, { cols: 41, pad: 1, color: "#ffb000" });
+  });
+  MARQUEE = new LEDDisplay(document.getElementById("led-marquee"), { cols: 170, scroll: true, speed: 20, pad: 1, color: "#ffb000" });
+  MARQUEE.set("LOADING 419,148 PLAYS   *   STAND BY");
+  fetch("data/matchups.json").then((r) => r.json()).then((m) => {
+    m.teams.forEach((t) => (TEAMCOLOR[t.abbr] = ledColor(t.color, t.color2)));
+    if (DATA) render();
+  }).catch(() => {});
+}
+buildLED();
+
+// Scrolling description of the current view on the booth marquee
+function updateMarquee(total) {
+  const s = state, A = "#ffb000", W = "#ffffff";
+  const opt = (id) => document.querySelector(`#f-${id} option[value="${s[id]}"]`).textContent.toUpperCase();
+  const team = s.team === "all" ? null : DATA.teams[+s.team];
+  const tc = team ? TEAMCOLOR[team] || W : W;
+  MARQUEE.set([
+    ["NOW SHOWING   ", A], [team ? team : "ALL TEAMS", tc], ["   *   ", A],
+    [opt("season"), W], ["   *   ", A], [opt("stype"), W], ["   *   ", A], [opt("ptype"), W], ["   *   ", A],
+    [opt("down"), W], ["   *   ", A], [opt("qtr"), W], ["   *   ", A], [opt("home"), W], ["   *   ", A],
+    [fmt.num(total) + " PLAYS", "#4ade80"], ["   *   MEASURE: ", A], [MEASURES[s.measure].label.toUpperCase(), W],
+    ["   *   BY ", A], [BREAKDOWNS[s.breakdown].label.toUpperCase(), W], ["   *   ", A],
+  ]);
+}
 
 function render() {
   syncControls();
@@ -260,6 +295,10 @@ function render() {
   charts.main.data.labels = keys.map(bd.name);
   charts.main.data.datasets[0].label = m.label;
   charts.main.data.datasets[0].data = keys.map((k) => val(r.groups.get(k).all));
+  // bars take the team's color when one team is selected, or when breaking down by team
+  charts.main.data.datasets[0].backgroundColor = state.breakdown === "team"
+    ? keys.map((k) => TEAMCOLOR[DATA.teams[k]] || COLORS.s1)
+    : (state.team !== "all" && TEAMCOLOR[DATA.teams[+state.team]]) || COLORS.s1;
   charts.main.update();
 
   // Chart 2: pass vs run trend by season
@@ -289,6 +328,7 @@ function render() {
   charts.split.update();
 
   renderTable(r, keys, bd);
+  updateMarquee(t.n);
 }
 
 function renderTable(r, keys, bd) {
@@ -306,7 +346,7 @@ function renderTable(r, keys, bd) {
   };
   const head = `<thead><tr><th>${bd.label[0].toUpperCase() + bd.label.slice(1)}</th><th>Plays</th><th>Yards/play</th><th>EPA/play</th><th>Success</th><th>TD rate</th><th>Turnover rate</th><th>4th-down go rate</th></tr></thead>`;
   const body = keys.map((k) => row(bd.name(k), r.groups.get(k).all, r.fourth.has(k) ? r.fourth.get(k).all : null)).join("");
-  const foot = row("<strong>All</strong>", r.total, r.fourthTotal, ' style="font-weight:600;background:#f1efe9"');
+  const foot = row("<strong>All</strong>", r.total, r.fourthTotal, ' class="total"');
   document.getElementById("table").innerHTML = head + `<tbody>${body}${foot}</tbody>`;
   setText("t-table", `Numbers behind the current view, by ${bd.label}`);
 }
