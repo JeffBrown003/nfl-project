@@ -20,6 +20,7 @@ One row in the cleaned data is **one play**. The cleaning script drops no-plays 
 
 | File | What it does |
 |---|---|
+| `README.md` | This file: what the project is, where the data came from, every file and what it does, and how to rebuild the numbers. |
 | `index.html` | The report page: summary, headline numbers, nine findings with charts, and the data explanation. |
 | `dashboard.html` | The dashboard page: filters, measure and breakdown switches, summary numbers, four charts, a data table and a reset button. |
 | `matchups.html` | The matchups page: pick two teams to see their head-to-head record, win %, margin chart, season form and every game, plus the league-wide grid. |
